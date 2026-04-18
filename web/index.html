@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pro Scalping Bot — لوحة التحكم</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════
+       VARIABLES — Batlah-inspired dark gold theme
+    ═══════════════════════════════════════════ */
+    :root {
+      --bg-deep:    #070707;
+      --bg-main:    #0d0d0d;
+      --bg-card:    #141414;
+      --bg-card2:   #1c1c1c;
+      --gold:       #c9a84c;
+      --gold-light: #e8d08a;
+      --gold-dim:   #8a6e2e;
+      --gold-glow:  rgba(201,168,76,.18);
+      --white:      #ffffff;
+      --gray-1:     #d0d0d0;
+      --gray-2:     #888888;
+      --gray-3:     #444444;
+      --green:      #3ecf8e;
+      --red:        #e05c5c;
+      --border:     rgba(201,168,76,.15);
+      --border-h:   rgba(201,168,76,.45);
+      --radius:     12px;
+      --transition: .35s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ═══════ RESET ═══════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: var(--bg-deep);
+      color: var(--white);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+
+    /* ═══════ SCROLLBAR ═══════ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+    /* ═══════ NOISE TEXTURE ═══════ */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ═══════ NAV ═══════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(20px,5vw,80px);
+      height: 72px;
+      background: rgba(7,7,7,.85);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.25rem;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dim));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links {
+      display: flex; gap: 2rem; list-style: none;
+      font-size: .9rem; font-weight: 500; letter-spacing: .5px;
+    }
+    .nav-links a {
+      color: var(--gray-1);
+      transition: color var(--transition);
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -4px; right: 0; left: 0;
+      height: 1px; background: var(--gold);
+      transform: scaleX(0); transform-origin: right;
+      transition: transform var(--transition);
+    }
+    .nav-links a:hover { color: var(--gold-light); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+    .nav-status {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .8rem; color: var(--gray-2);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: .4; }
+    }
+
+    /* ═══════ HERO ═══════ */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 100px clamp(20px,6vw,100px) 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(201,168,76,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-line {
+      width: 60px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 2rem;
+    }
+    .hero-tag {
+      font-size: .78rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: 2px;
+      background: linear-gradient(160deg, var(--white) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.2rem;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--gray-2);
+      max-width: 560px;
+      margin: 0 auto 3rem;
+      font-weight: 400;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: .6rem;
+      padding: .85rem 2.2rem;
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      font-family: 'Cairo', sans-serif;
+      font-size: .95rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--gold-glow), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .hero-cta:hover::before { opacity: 1; }
+    .hero-cta:hover {
+      box-shadow: 0 0 28px rgba(201,168,76,.3);
+      transform: translateY(-2px);
+    }
+    .hero-scroll {
+      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: .4rem;
+      color: var(--gray-3);
+      font-size: .72rem; letter-spacing: 2px;
+      animation: bounce 2.5s infinite;
+    }
+    .hero-scroll svg { stroke: var(--gold-dim); }
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ═══════ DIVIDER ═══════ */
+    .divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 0 clamp(20px,5vw,80px) 3rem;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-icon { color: var(--gold); font-size: .7rem; letter-spacing: 3px; white-space: nowrap; }
+
+    /* ═══════ SECTION ═══════ */
+    section {
+      padding: 80px clamp(20px,5vw,80px);
+      position: relative;
+    }
+    .section-label {
+      font-size: .72rem; letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .6rem;
+    }
+    .section-title {
+      font-size: clamp(1.6rem,3.5vw,2.4rem);
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: .8rem;
+    }
+    .section-desc {
+      color: var(--gray-2);
+      max-width: 500px;
+      font-size: .95rem;
+    }
+
+    /* ═══════ STATS ═══════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 3rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      padding: 2rem 1.8rem;
+      transition: background var(--transition);
+    }
+    .stat-card:hover { background: var(--bg-card2); }
+    .stat-label {
+      font-size: .76rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gray-2);
+      margin-bottom: .8rem;
+    }
+    .stat-value {
+      font-size: 2.4rem;
+      font-weight: 700;
+      font-family: 'Cinzel', serif;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: .4rem;
+    }
+    .stat-change {
+      font-size: .8rem;
+      color: var(--green);
+      display: flex; align-items: center; gap: .3rem;
+    }
+    .stat-change.neg { color: var(--red); }
+
+    /* ═══════ FEATURES ═══════ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; right: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      transform: scaleX(0);
+      transition: transform var(--transition);
+    }
+    .feature-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.4), 0 0 0 1px var(--border-h);
+    }
+    .feature-card:hover::before { transform: scaleX(1); }
+    .feature-icon {
+      width: 48px; height: 48px;
+      background: var(--gold-glow);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.2rem;
+      font-size: 1.4rem;
+    }
+    .feature-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: .5rem;
+    }
+    .feature-desc {
+      font-size: .85rem;
+      color: var(--gray-2);
+      line-height: 1.7;
+    }
+
+    /* ═══════ PAIRS TABLE ═══════ */
+    .pairs-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .pairs-badge {
+      font-size: .72rem;
+      letter-spacing: 2px;
+      color: var(--gold);
+      background: var(--gold-glow);
+      border: 1px solid var(--border);
+      padding: .3rem .8rem;
+      border-radius: 20px;
+    }
+    .pairs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .pair-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      display: flex; flex-direction: column; gap: .4rem;
+      transition: all var(--transition);
+      cursor: default;
+    }
+    .pair-tile:hover {
+      border-color: var(--border-h);
+      background: var(--bg-card2);
+      box-shadow: 0 4px 20px rgba(201,168,76,.08);
+    }
+    .pair-name {
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .pair-tf {
+      font-size: .72rem;
+      color: var(--gray-2);
+      letter-spacing: 1px;
+    }
+    .pair-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      align-self: flex-end;
+    }
+    .pair-dot.active {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    /* ═══════ RISK SECTION ═══════ */
+    .risk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    @media (max-width: 640px) { .risk-grid { grid-template-columns: 1fr; } }
+    .risk-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+    }
+    .risk-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .75rem 0;
+      border-bottom: 1px solid rgba(201,168,76,.06);
+      font-size: .88rem;
+    }
+    .risk-row:last-child { border-bottom: none; }
+    .risk-key { color: var(--gray-2); }
+    .risk-val {
+      color: var(--gold-light);
+      font-weight: 600;
+      font-family: 'Cinzel', serif;
+      font-size: .9rem;
+    }
+    .risk-card-title {
+      font-size: .78rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    /* ═══════ PROGRESS BAR ═══════ */
+    .progress-wrap { margin-bottom: 1.4rem; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: .8rem; margin-bottom: .4rem;
+    }
+    .progress-key { color: var(--gray-2); }
+    .progress-val { color: var(--gold-light); font-weight: 600; }
+    .progress-track {
+      height: 4px;
+      background: var(--bg-card2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 2px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ═══════ FOOTER ═══════ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem clamp(20px,5vw,80px);
+      display: flex; flex-wrap: wrap;
+      align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .footer-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .footer-copy {
+      font-size: .78rem;
+      color: var(--gray-3);
+      letter-spacing: 1px;
+    }
+    .footer-tag {
+      font-size: .72rem;
+      color: var(--gold-dim);
+      letter-spacing: 2px;
+    }
+
+    /* ═══════ GOLD SEPARATOR ═══════ */
+    .gold-sep {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      margin: 0;
+    }
+
+    /* ═══════ RESPONSIVE NAV ═══════ */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <span class="nav-logo">PSB</span>
+    <ul class="nav-links">
+      <li><a href="#stats">الأداء</a></li>
+      <li><a href="#features">المميزات</a></li>
+      <li><a href="#pairs">الأزواج</a></li>
+      <li><a href="#risk">إدارة المخاطر</a></li>
+    </ul>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span>البوت نشط</span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-line"></div>
+    <p class="hero-tag">Crypto Futures Trading</p>
+    <h1 class="hero-title">Pro Scalping Bot</h1>
+    <p class="hero-sub">منصة تداول احترافية للعقود الآجلة — تعمل على 30 زوجاً في الوقت الفعلي بإدارة مخاطر ذكية واستراتيجية ATR متقدمة</p>
+    <a href="#stats" class="hero-cta">
+      استعرض الأداء
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="hero-scroll">
+      <span>SCROLL</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+        <path d="M12 5v14M5 12l7 7 7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <div class="gold-sep"></div>
+
+  <!-- STATS -->
+  <section id="stats">
+    <p class="section-label">لوحة التحكم</p>
+    <h2 class="section-title">إحصائيات الأداء</h2>
+    <p class="section-desc">مؤشرات حية لمتابعة أداء البوت ونتائج التداول اليومية</p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="stat-label">أزواج التداول</p>
+        <p class="stat-value">30</p>
+        <p class="stat-change">▲ نشطة الآن</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">نسبة المكافأة للمخاطرة</p>
+        <p class="stat-value">1:2</p>
+        <p class="stat-change">▲ حد أدنى 1.8</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">أقصى صفقات مفتوحة</p>
+        <p class="stat-value">5</p>
+        <p class="stat-change">▲ إدارة محكمة</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">وقف الخسارة اليومي</p>
+        <p class="stat-value">5%</p>
+        <p class="stat-change neg">▼ حماية تلقائية</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <span class="divider-icon">✦ FEATURES ✦</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <p class="section-label">المميزات الرئيسية</p>
+    <h2 class="section-title">استراتيجية متكاملة</h2>
+    <p class="section-desc">مبني بدقة على أدوات تحليل تقني متقدمة مع حماية رأس المال كأولوية</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">تداول فائق السرعة</h3>
+        <p class="feature-desc">فحص مستمر كل 60 ثانية لجميع الأزواج بحثاً عن الفرص المثلى في السوق</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <h3 class="feature-title">مؤشر ATR الذكي</h3>
+        <p class="feature-desc">Stop Loss عند 1.5× ATR و Take Profit عند 3.0× ATR لتحقيق أفضل نسبة مخاطرة/عائد</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3 class="feature-title">إدارة مخاطر متطورة</h3>
+        <p class="feature-desc">1% مخاطرة لكل صفقة مع رافعة مالية 10× وحماية تلقائية عند خسارة 5% يومياً</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 class="feature-title">تحليل حجم التداول</h3>
+        <p class="feature-desc">يشترط أن يكون حجم التداول أعلى من المتوسط بـ 20% لضمان سيولة كافية</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3 class="feature-title">تعديل ديناميكي للحجم</h3>
+        <p class="feature-desc">تخفيض تلقائي لحجم الصفقة بعد 3 خسائر متتالية لحماية رأس المال</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3 class="feature-title">نشر على السحابة</h3>
+        <p class="feature-desc">مُصمم للعمل على Railway مع إعادة تشغيل تلقائية وإدارة كاملة بدون توقف</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <span class="divider-icon">✦ PAIRS ✦</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- TRADING PAIRS -->
+  <section id="pairs">
+    <div class="pairs-header">
+      <div>
+        <p class="section-label">أزواج التداول</p>
+        <h2 class="section-title">أفضل 30 زوجاً</h2>
+      </div>
+      <span class="pairs-badge">5M TIMEFRAME</span>
+    </div>
+    <div class="pairs-grid">
+      <div class="pair-tile"><span class="pair-name">BTC/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">ETH/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">SOL/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">BNB/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">XRP/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">DOGE/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">ADA/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">AVAX/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">LINK/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">DOT/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">LTC/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">UNI/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">NEAR/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">ARB/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">OP/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">SUI/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">APT/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">INJ/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">TIA/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">FIL/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">ATOM/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">FET/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">JUP/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">PYTH/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">WIF/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">PEPE/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">SHIB/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">TRB/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+      <div class="pair-tile"><span class="pair-name">AAVE/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot active"></span></div>
+      <div class="pair-tile"><span class="pair-name">MKR/USDT</span><span class="pair-tf">5M • 150 شمعة</span><span class="pair-dot"></span></div>
+    </div>
+  </section>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <span class="divider-icon">✦ RISK ✦</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- RISK MANAGEMENT -->
+  <section id="risk">
+    <p class="section-label">إدارة المخاطر</p>
+    <h2 class="section-title">ضوابط الحماية</h2>
+    <p class="section-desc">منظومة متكاملة لحماية رأس المال وتعظيم العائد على المدى الطويل</p>
+
+    <div class="risk-grid">
+      <div class="risk-card">
+        <p class="risk-card-title">إعدادات المخاطر</p>
+        <div class="risk-row"><span class="risk-key">الرافعة المالية</span><span class="risk-val">10×</span></div>
+        <div class="risk-row"><span class="risk-key">المخاطرة لكل صفقة</span><span class="risk-val">1%</span></div>
+        <div class="risk-row"><span class="risk-key">وقف الخسارة اليومي</span><span class="risk-val">5%</span></div>
+        <div class="risk-row"><span class="risk-key">خسائر متتالية قبل التخفيض</span><span class="risk-val">3</span></div>
+        <div class="risk-row"><span class="risk-key">أقصى صفقات مفتوحة</span><span class="risk-val">5</span></div>
+        <div class="risk-row"><span class="risk-key">أدنى نسبة مكافأة:مخاطرة</span><span class="risk-val">1.8</span></div>
+      </div>
+
+      <div class="risk-card">
+        <p class="risk-card-title">إعدادات الاستراتيجية</p>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span class="progress-key">Stop Loss (ATR×)</span>
+            <span class="progress-val">1.5×</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:50%"></div>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span class="progress-key">Take Profit (ATR×)</span>
+            <span class="progress-val">3.0×</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span class="progress-key">فلتر حجم التداول</span>
+            <span class="progress-val">1.2× المتوسط</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:40%"></div>
+          </div>
+        </div>
+        <div class="risk-row"><span class="risk-key">الإطار الزمني</span><span class="risk-val">5 دقائق</span></div>
+        <div class="risk-row"><span class="risk-key">دورة الفحص</span><span class="risk-val">60 ثانية</span></div>
+        <div class="risk-row"><span class="risk-key">عمق الشموع</span><span class="risk-val">150</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gold-sep"></div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-logo">PRO SCALPING BOT</span>
+    <span class="footer-copy">© 2025 — جميع الحقوق محفوظة</span>
+    <span class="footer-tag">CRYPTO FUTURES • RAILWAY CLOUD</span>
+  </footer>
+
+</body>
+</html>
