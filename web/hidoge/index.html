@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>$HIDOGE — Say Hi to the Moon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ══════════════════════════════════
+       VARIABLES
+    ══════════════════════════════════ */
+    :root {
+      --bg:         #080e1c;
+      --bg2:        #0c1528;
+      --bg3:        #101e38;
+      --bg4:        #162040;
+      --gold:       #c9a843;
+      --gold-l:     #f0cc6a;
+      --gold-d:     #8a6e1e;
+      --cyan:       #00d4f5;
+      --cyan-d:     #0097b8;
+      --cyan-glow:  rgba(0,212,245,.18);
+      --gold-glow:  rgba(201,168,67,.2);
+      --white:      #ffffff;
+      --gray:       #8fa0b8;
+      --gray-d:     #3a4a60;
+      --border-c:   rgba(0,212,245,.25);
+      --border-g:   rgba(201,168,67,.2);
+      --r:          14px;
+      --ease:       .35s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ══════════════════════════════════
+       RESET
+    ══════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      overflow-x: hidden;
+      line-height: 1.7;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--cyan-d); border-radius: 3px; }
+
+    /* ══════════════════════════════════
+       BACKGROUND GRADIENT BLOBS
+    ══════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 900px;
+      background: radial-gradient(circle, rgba(0,180,220,.07) 0%, transparent 65%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; bottom: -300px; right: -200px;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(201,168,67,.06) 0%, transparent 65%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ══════════════════════════════════
+       NAV
+    ══════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(16px,4vw,64px);
+      height: 68px;
+      background: rgba(8,14,28,.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,212,245,.12);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .nav-logo-img {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border-g);
+    }
+    .nav-logo-placeholder {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      border: 1px solid var(--border-g);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .nav-name {
+      font-family: 'Orbitron', monospace;
+      font-size: .95rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-l), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+    .nav-links {
+      display: flex; gap: 2.2rem; list-style: none;
+    }
+    .nav-links a {
+      font-size: .88rem;
+      font-weight: 500;
+      color: var(--gray);
+      letter-spacing: .5px;
+      transition: color var(--ease);
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -3px; left: 0; right: 0;
+      height: 1px; background: var(--cyan);
+      transform: scaleX(0);
+      transition: transform var(--ease);
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+    .btn-wallet {
+      padding: .5rem 1.3rem;
+      border: 1px solid var(--cyan);
+      border-radius: 6px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--white);
+      background: transparent;
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: all var(--ease);
+    }
+    .btn-wallet:hover {
+      background: var(--cyan-glow);
+      box-shadow: 0 0 20px rgba(0,212,245,.3);
+    }
+
+    /* ══════════════════════════════════
+       HERO
+    ══════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 100px 20px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* star particles */
+    .stars {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: var(--white);
+      animation: twinkle var(--dur, 3s) infinite var(--delay, 0s);
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: .1; transform: scale(1); }
+      50%      { opacity: .7; transform: scale(1.4); }
+    }
+
+    .hero-mascot {
+      position: relative;
+      width: clamp(220px, 38vw, 380px);
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 40px rgba(0,212,245,.25))
+              drop-shadow(0 20px 60px rgba(201,168,67,.2));
+      animation: float 4s ease-in-out infinite;
+    }
+    .hero-mascot img {
+      width: 100%;
+      border-radius: 50%;
+    }
+    .mascot-placeholder {
+      width: clamp(220px,38vw,380px);
+      height: clamp(220px,38vw,380px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, var(--gold-l), var(--gold-d));
+      border: 3px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(5rem,12vw,9rem);
+      box-shadow: 0 0 60px var(--gold-glow), 0 0 120px rgba(0,212,245,.1);
+      margin-bottom: 1rem;
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-16px); }
+    }
+
+    .hero-ticker {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(3.5rem, 10vw, 7.5rem);
+      font-weight: 900;
+      background: linear-gradient(160deg, var(--gold-l) 0%, var(--gold) 50%, var(--gold-d) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      letter-spacing: 4px;
+      text-shadow: none;
+      margin-bottom: .2rem;
+    }
+    .hero-name {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.5rem, 4vw, 2.4rem);
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--gold-l), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+      margin-bottom: .8rem;
+    }
+    .hero-tagline {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      color: var(--cyan);
+      font-weight: 500;
+      letter-spacing: 1px;
+      margin-bottom: 2rem;
+    }
+
+    .supply-box {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 1rem 2.5rem;
+      border: 1.5px solid var(--cyan);
+      border-radius: 10px;
+      font-size: clamp(.9rem, 2vw, 1.15rem);
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 1px;
+      background: rgba(0,212,245,.05);
+      box-shadow: 0 0 30px var(--cyan-glow), inset 0 0 30px rgba(0,212,245,.04);
+      position: relative;
+      margin-bottom: 2.5rem;
+    }
+    .supply-box::before,
+    .supply-box::after {
+      content: '';
+      position: absolute; left: -1px; right: -1px;
+      height: 1px;
+    }
+    .supply-box::before { top: -1px; background: linear-gradient(90deg,transparent,var(--cyan),transparent); }
+    .supply-box::after  { bottom: -1px; background: linear-gradient(90deg,transparent,var(--cyan),transparent); }
+
+    .hero-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+    }
+    .btn-primary {
+      padding: .85rem 2rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-d));
+      border: none; border-radius: 8px;
+      color: #0a0a0a;
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all var(--ease);
+      box-shadow: 0 4px 20px var(--gold-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(201,168,67,.4);
+    }
+    .btn-secondary {
+      padding: .85rem 2rem;
+      border: 1.5px solid var(--cyan);
+      border-radius: 8px;
+      color: var(--cyan);
+      background: transparent;
+      font-size: .95rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+    .btn-secondary:hover {
+      background: var(--cyan-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,212,245,.25);
+    }
+
+    /* scroll indicator */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--gray-d);
+      font-size: .7rem; letter-spacing: 3px;
+      animation: scrollBounce 2.5s infinite;
+    }
+    .scroll-hint svg { stroke: var(--cyan-d); }
+    @keyframes scrollBounce {
+      0%,100% { transform: translateX(-50%) translateY(0); opacity: .6; }
+      50%      { transform: translateX(-50%) translateY(8px); opacity: 1; }
+    }
+
+    /* ══════════════════════════════════
+       SECTION BASE
+    ══════════════════════════════════ */
+    section {
+      position: relative;
+      padding: 80px clamp(20px,6vw,100px);
+    }
+    .section-tag {
+      display: inline-block;
+      font-size: .7rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      border: 1px solid var(--border-c);
+      padding: .25rem .8rem;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+      background: var(--cyan-glow);
+    }
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--white), var(--gold-l));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .8rem;
+      letter-spacing: 2px;
+    }
+    .section-desc {
+      font-size: 1rem;
+      color: var(--gray);
+      max-width: 520px;
+      line-height: 1.8;
+    }
+
+    /* cyan separator */
+    .sep {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan-d), transparent);
+    }
+
+    /* ══════════════════════════════════
+       ABOUT
+    ══════════════════════════════════ */
+    .about-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .about-wrap { grid-template-columns: 1fr; gap: 2rem; }
+    }
+    .about-text p {
+      color: var(--gray);
+      font-size: .98rem;
+      line-height: 1.9;
+      margin-bottom: 1rem;
+    }
+    .about-text p strong { color: var(--gold-l); }
+    .about-stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .astat {
+      background: var(--bg3);
+      border: 1px solid var(--border-c);
+      border-radius: var(--r);
+      padding: 1.4rem;
+      text-align: center;
+      transition: all var(--ease);
+    }
+    .astat:hover {
+      border-color: rgba(0,212,245,.5);
+      background: var(--bg4);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,212,245,.1);
+    }
+    .astat-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold-l), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .25rem;
+    }
+    .astat-label {
+      font-size: .72rem;
+      color: var(--gray);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════
+       TOKENOMICS
+    ══════════════════════════════════ */
+    .token-bg { background: var(--bg2); }
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+      margin-top: 3rem;
+    }
+    .token-card {
+      background: var(--bg3);
+      border: 1px solid var(--border-g);
+      border-radius: var(--r);
+      padding: 1.8rem 1.4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--ease);
+    }
+    .token-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .token-card:hover {
+      border-color: var(--border-g);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(201,168,67,.12);
+      background: var(--bg4);
+    }
+    .token-pct {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.4rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold-l), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: .4rem;
+    }
+    .token-name {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: .3rem;
+    }
+    .token-desc {
+      font-size: .76rem;
+      color: var(--gray);
+    }
+    .token-supply {
+      margin-top: 3rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 2rem;
+    }
+    .supply-item { text-align: center; }
+    .supply-num {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 800;
+      color: var(--cyan);
+    }
+    .supply-lbl {
+      font-size: .72rem;
+      color: var(--gray);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .supply-div { width: 1px; height: 50px; background: var(--border-c); }
+
+    /* ══════════════════════════════════
+       ROADMAP
+    ══════════════════════════════════ */
+    .roadmap-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+      position: relative;
+    }
+    .phase {
+      background: var(--bg3);
+      border: 1px solid var(--border-c);
+      border-radius: var(--r);
+      padding: 1.8rem;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--ease);
+    }
+    .phase.active {
+      border-color: rgba(0,212,245,.5);
+      box-shadow: 0 0 30px rgba(0,212,245,.08);
+    }
+    .phase::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan-d), transparent);
+      opacity: 0;
+      transition: opacity var(--ease);
+    }
+    .phase:hover::after { opacity: 1; }
+    .phase:hover { transform: translateY(-4px); background: var(--bg4); }
+    .phase-num {
+      font-family: 'Orbitron', monospace;
+      font-size: .72rem;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      margin-bottom: .6rem;
+    }
+    .phase-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: .8rem;
+    }
+    .phase-items { list-style: none; }
+    .phase-items li {
+      font-size: .83rem;
+      color: var(--gray);
+      padding: .3rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .phase-items li::before {
+      content: '▸';
+      color: var(--cyan);
+      font-size: .7rem;
+      flex-shrink: 0;
+    }
+    .phase-items li:last-child { border-bottom: none; }
+    .phase-badge {
+      display: inline-block;
+      font-size: .65rem;
+      letter-spacing: 2px;
+      padding: .15rem .6rem;
+      border-radius: 20px;
+      margin-bottom: .8rem;
+    }
+    .phase-badge.done { background: rgba(62,207,142,.15); color: #3ecf8e; border: 1px solid rgba(62,207,142,.3); }
+    .phase-badge.live { background: var(--cyan-glow); color: var(--cyan); border: 1px solid var(--border-c); }
+    .phase-badge.soon { background: rgba(201,168,67,.1); color: var(--gold); border: 1px solid var(--border-g); }
+
+    /* ══════════════════════════════════
+       COMMUNITY
+    ══════════════════════════════════ */
+    .comm-bg { background: var(--bg2); }
+    .comm-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-top: 3rem;
+      justify-content: center;
+    }
+    .comm-card {
+      background: var(--bg3);
+      border: 1px solid var(--border-c);
+      border-radius: var(--r);
+      padding: 2rem 2.5rem;
+      text-align: center;
+      min-width: 180px;
+      transition: all var(--ease);
+      cursor: pointer;
+    }
+    .comm-card:hover {
+      border-color: rgba(0,212,245,.5);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0,212,245,.12);
+    }
+    .comm-icon {
+      font-size: 2.5rem;
+      margin-bottom: .8rem;
+      display: block;
+    }
+    .comm-name {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: .2rem;
+    }
+    .comm-action {
+      font-size: .75rem;
+      color: var(--cyan);
+    }
+
+    /* X icon SVG */
+    .x-icon {
+      width: 40px; height: 40px;
+      fill: var(--gold-l);
+      margin: 0 auto .8rem;
+    }
+
+    /* ══════════════════════════════════
+       DISCLAIMER
+    ══════════════════════════════════ */
+    .disclaimer {
+      padding: 2rem clamp(20px,6vw,100px);
+      background: var(--bg);
+      text-align: center;
+    }
+    .disclaimer p {
+      font-size: .72rem;
+      color: var(--gray-d);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ══════════════════════════════════
+       FOOTER
+    ══════════════════════════════════ */
+    footer {
+      border-top: 1px solid rgba(0,212,245,.1);
+      padding: 2.5rem clamp(20px,6vw,100px);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--bg2);
+    }
+    .footer-brand {
+      font-family: 'Orbitron', monospace;
+      font-size: .9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-l), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+    .footer-links {
+      display: flex; gap: 1.5rem; list-style: none;
+    }
+    .footer-links a {
+      font-size: .8rem;
+      color: var(--gray);
+      transition: color var(--ease);
+    }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-right {
+      font-size: .75rem;
+      color: var(--gray-d);
+    }
+
+    /* ══════════════════════════════════
+       RESPONSIVE NAV
+    ══════════════════════════════════ */
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ NAV ═══ -->
+  <nav>
+    <div class="nav-brand">
+      <!-- Replace logo.png with your actual logo file -->
+      <img src="logo.png" alt="HiDoge" class="nav-logo-img"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+      <div class="nav-logo-placeholder" style="display:none">🐕</div>
+      <span class="nav-name">$HIDOGE</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#tokenomics">Tokenomics</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#community">Community</a></li>
+    </ul>
+    <button class="btn-wallet">Connect Wallet</button>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+    <!-- star particles -->
+    <div class="stars" id="stars"></div>
+
+    <!-- mascot -->
+    <div class="hero-mascot">
+      <img src="logo.png" alt="HiDoge Mascot"
+           onerror="this.parentElement.innerHTML='<div class=\'mascot-placeholder\'>🐕</div>'" />
+    </div>
+
+    <h1 class="hero-ticker">$HIDOGE</h1>
+    <h2 class="hero-name">HiDoge</h2>
+    <p class="hero-tagline">Say Hi to the Moon 🌕</p>
+
+    <div class="supply-box">
+      Total Supply: 1,000,000,000 Tokens
+    </div>
+
+    <div class="hero-btns">
+      <button class="btn-primary">Buy $HIDOGE</button>
+      <button class="btn-secondary">View Chart</button>
+    </div>
+
+    <div class="scroll-hint">
+      <span>SCROLL</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2">
+        <path d="M12 5v14M5 12l7 7 7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ═══ ABOUT ═══ -->
+  <section id="about">
+    <div class="about-wrap">
+      <div class="about-text">
+        <span class="section-tag">ABOUT</span>
+        <h2 class="section-title">What is HiDoge?</h2>
+        <p>HiDoge is not just a token — it's a <strong>movement</strong>. Born from the golden paws of our mascot, we are a community-driven project aiming for the moon.</p>
+        <p>Join the pack and be part of the legacy. <strong>$HIDOGE</strong> is built for those who believe in the power of community, memes, and the spirit of the original doge — but taken to new golden heights.</p>
+        <div style="margin-top:1.5rem;display:flex;gap:.8rem;flex-wrap:wrap">
+          <button class="btn-primary" style="font-size:.85rem;padding:.65rem 1.4rem">Read Whitepaper</button>
+          <button class="btn-secondary" style="font-size:.85rem;padding:.65rem 1.4rem">View Contract</button>
+        </div>
+      </div>
+      <div class="about-stats">
+        <div class="astat">
+          <div class="astat-val">1B</div>
+          <div class="astat-label">Total Supply</div>
+        </div>
+        <div class="astat">
+          <div class="astat-val">0%</div>
+          <div class="astat-label">Buy Tax</div>
+        </div>
+        <div class="astat">
+          <div class="astat-val">0%</div>
+          <div class="astat-label">Sell Tax</div>
+        </div>
+        <div class="astat">
+          <div class="astat-val">🔥</div>
+          <div class="astat-label">LP Burned</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ═══ TOKENOMICS ═══ -->
+  <section id="tokenomics" class="token-bg">
+    <div style="text-align:center">
+      <span class="section-tag">TOKENOMICS</span>
+      <h2 class="section-title">Token Distribution</h2>
+      <p class="section-desc" style="margin:0 auto">Fair and transparent distribution designed for long-term community growth and sustainability.</p>
+    </div>
+    <div class="token-grid">
+      <div class="token-card">
+        <div class="token-pct">50%</div>
+        <div class="token-name">Liquidity</div>
+        <div class="token-desc">Locked forever — LP burned on launch</div>
+      </div>
+      <div class="token-card">
+        <div class="token-pct">20%</div>
+        <div class="token-name">Community</div>
+        <div class="token-desc">Airdrops, rewards & giveaways</div>
+      </div>
+      <div class="token-card">
+        <div class="token-pct">15%</div>
+        <div class="token-name">Marketing</div>
+        <div class="token-desc">Listings, partnerships & ads</div>
+      </div>
+      <div class="token-card">
+        <div class="token-pct">10%</div>
+        <div class="token-name">Development</div>
+        <div class="token-desc">Platform features & ecosystem</div>
+      </div>
+      <div class="token-card">
+        <div class="token-pct">5%</div>
+        <div class="token-name">Reserve</div>
+        <div class="token-desc">Emergency & future needs</div>
+      </div>
+    </div>
+    <div class="token-supply">
+      <div class="supply-item">
+        <div class="supply-num">1,000,000,000</div>
+        <div class="supply-lbl">Total Supply</div>
+      </div>
+      <div class="supply-div"></div>
+      <div class="supply-item">
+        <div class="supply-num">0%</div>
+        <div class="supply-lbl">Tax</div>
+      </div>
+      <div class="supply-div"></div>
+      <div class="supply-item">
+        <div class="supply-num">🔥 Burned</div>
+        <div class="supply-lbl">Liquidity</div>
+      </div>
+      <div class="supply-div"></div>
+      <div class="supply-item">
+        <div class="supply-num">✅ Renounced</div>
+        <div class="supply-lbl">Contract</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ═══ ROADMAP ═══ -->
+  <section id="roadmap">
+    <div style="text-align:center;margin-bottom:1rem">
+      <span class="section-tag">ROADMAP</span>
+      <h2 class="section-title">The Journey to Moon</h2>
+    </div>
+    <div class="roadmap-list">
+      <div class="phase">
+        <div class="phase-num">PHASE 01</div>
+        <span class="phase-badge done">COMPLETED</span>
+        <div class="phase-title">Launch</div>
+        <ul class="phase-items">
+          <li>Token deployment</li>
+          <li>Website launch</li>
+          <li>Social media setup</li>
+          <li>LP locked & burned</li>
+          <li>Contract renounced</li>
+        </ul>
+      </div>
+      <div class="phase active">
+        <div class="phase-num">PHASE 02</div>
+        <span class="phase-badge live">LIVE NOW</span>
+        <div class="phase-title">Community Growth</div>
+        <ul class="phase-items">
+          <li>CoinGecko listing</li>
+          <li>CoinMarketCap listing</li>
+          <li>1,000 holders</li>
+          <li>Community airdrops</li>
+          <li>Influencer partnerships</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-num">PHASE 03</div>
+        <span class="phase-badge soon">COMING SOON</span>
+        <div class="phase-title">Expansion</div>
+        <ul class="phase-items">
+          <li>CEX listings</li>
+          <li>10,000 holders</li>
+          <li>HiDoge merch store</li>
+          <li>NFT collection</li>
+          <li>Strategic partnerships</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-num">PHASE 04</div>
+        <span class="phase-badge soon">FUTURE</span>
+        <div class="phase-title">Ecosystem</div>
+        <ul class="phase-items">
+          <li>HiDoge DEX</li>
+          <li>Staking platform</li>
+          <li>Mobile app</li>
+          <li>100,000 holders</li>
+          <li>Major tier-1 CEX</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ═══ COMMUNITY ═══ -->
+  <section id="community" class="comm-bg">
+    <div style="text-align:center">
+      <span class="section-tag">COMMUNITY</span>
+      <h2 class="section-title">Join the Pack</h2>
+      <p class="section-desc" style="margin:0 auto">Be part of the HiDoge family. Follow us, join the conversation, and howl at the moon together.</p>
+    </div>
+    <div class="comm-grid">
+      <div class="comm-card">
+        <svg class="x-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        <div class="comm-name">X (Twitter)</div>
+        <div class="comm-action">Join the conversation</div>
+      </div>
+      <div class="comm-card">
+        <!-- Telegram icon -->
+        <span class="comm-icon">✈️</span>
+        <div class="comm-name">Telegram</div>
+        <div class="comm-action">Join our group</div>
+      </div>
+      <div class="comm-card">
+        <span class="comm-icon">💬</span>
+        <div class="comm-name">Discord</div>
+        <div class="comm-action">Join the server</div>
+      </div>
+      <div class="comm-card">
+        <span class="comm-icon">📊</span>
+        <div class="comm-name">DEXTools</div>
+        <div class="comm-action">View chart</div>
+      </div>
+      <div class="comm-card">
+        <span class="comm-icon">🦎</span>
+        <div class="comm-name">CoinGecko</div>
+        <div class="comm-action">Track price</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <p>$HIDOGE is a meme token created for entertainment purposes. It has no intrinsic value or financial return expectation. Please do your own research before investing. Crypto investments carry significant risk.</p>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-brand">$HIDOGE</span>
+    <ul class="footer-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#tokenomics">Tokenomics</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#community">Community</a></li>
+    </ul>
+    <span class="footer-right">© 2025 HiDoge — To the Moon 🌕</span>
+  </footer>
+
+  <script>
+    // generate star particles
+    (function () {
+      const c = document.getElementById('stars');
+      for (let i = 0; i < 120; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const sz = Math.random() * 2.5 + .5;
+        s.style.cssText = `
+          width:${sz}px; height:${sz}px;
+          top:${Math.random()*100}%;
+          left:${Math.random()*100}%;
+          --dur:${(Math.random()*4+2).toFixed(1)}s;
+          --delay:${(Math.random()*5).toFixed(1)}s;
+        `;
+        c.appendChild(s);
+      }
+    })();
+  </script>
+
+</body>
+</html>
