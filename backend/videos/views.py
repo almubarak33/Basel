@@ -12,7 +12,7 @@ from django.http import FileResponse, Http404
 from .models import (
     Video, VideoLike, VideoComment, Hashtag,
     WatchedVideo, UserInterest, VideoReport,
-    SavedVideo, Repost,
+    SavedVideo, Repost, PhotoSlide,
 )
 from .serializers import VideoSerializer, VideoCommentSerializer, HashtagSerializer
 
@@ -149,10 +149,18 @@ class VideoUploadView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        video = serializer.save(author=self.request.user)
-        audio = self.request.FILES.get('audio_file')
-        if audio:
-            self._merge_audio(video, audio)
+        post_type = self.request.data.get('post_type', 'video')
+        video = serializer.save(author=self.request.user, post_type=post_type)
+
+        # Handle multiple photo slides
+        if post_type == 'photo':
+            slides = self.request.FILES.getlist('slides')
+            for i, img in enumerate(slides):
+                PhotoSlide.objects.create(post=video, image=img, order=i)
+        else:
+            audio = self.request.FILES.get('audio_file')
+            if audio:
+                self._merge_audio(video, audio)
 
     def _merge_audio(self, video, audio_file):
         """Merge uploaded audio track into the video using ffmpeg."""

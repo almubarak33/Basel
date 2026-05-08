@@ -26,9 +26,14 @@ class Video(models.Model):
         ('private', 'Private'),
         ('archive', 'Archive'),
     ]
+    POST_TYPES = [
+        ('video', 'Video'),
+        ('photo', 'Photo Carousel'),
+    ]
 
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='videos')
-    video_file = models.FileField(upload_to='videos/')
+    post_type = models.CharField(max_length=10, choices=POST_TYPES, default='video')
+    video_file = models.FileField(upload_to='videos/', blank=True, null=True)
     thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
     audio_file = models.FileField(upload_to='audio/', blank=True, null=True)
     caption = models.TextField(max_length=300, blank=True)
@@ -124,6 +129,16 @@ class Repost(models.Model):
     class Meta:
         unique_together = ('user', 'video')
         ordering = ['-created_at']
+
+
+class PhotoSlide(models.Model):
+    """Individual image in a photo carousel post."""
+    post = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='slides')
+    image = models.ImageField(upload_to='slides/')
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
 
 
 class VideoReport(models.Model):

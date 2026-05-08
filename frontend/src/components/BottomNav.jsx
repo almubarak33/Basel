@@ -61,8 +61,8 @@ export default function BottomNav() {
         <span>الأصدقاء</span>
       </button>
 
-      {/* Upload */}
-      <button className={s.uploadBtn} onClick={() => navigate('/upload')}>
+      {/* Camera / Upload */}
+      <button className={s.uploadBtn} onClick={() => navigate('/camera')}>
         <span className={s.plusIcon}>+</span>
       </button>
 

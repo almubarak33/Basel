@@ -1,6 +1,12 @@
 from rest_framework import serializers
-from .models import Video, VideoLike, VideoComment, Hashtag, SavedVideo, Repost
+from .models import Video, VideoLike, VideoComment, Hashtag, SavedVideo, Repost, PhotoSlide
 from users.serializers import UserMiniSerializer
+
+
+class PhotoSlideSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhotoSlide
+        fields = ('id', 'image', 'order')
 
 
 class HashtagSerializer(serializers.ModelSerializer):
@@ -33,18 +39,19 @@ class VideoSerializer(serializers.ModelSerializer):
     is_saved = serializers.SerializerMethodField()
     is_reposted = serializers.SerializerMethodField()
     hashtags = HashtagSerializer(many=True, read_only=True)
+    slides = PhotoSlideSerializer(many=True, read_only=True)
 
     class Meta:
         model = Video
         fields = (
-            'id', 'author', 'video_file', 'thumbnail', 'audio_file', 'caption',
-            'hashtags', 'views_count', 'visibility',
+            'id', 'author', 'post_type', 'video_file', 'thumbnail', 'audio_file', 'caption',
+            'hashtags', 'slides', 'views_count', 'visibility',
             'likes_count', 'comments_count', 'saves_count', 'reposts_count',
             'is_liked', 'is_saved', 'is_reposted',
             'is_age_restricted', 'is_flagged', 'created_at',
         )
         read_only_fields = (
-            'id', 'author', 'views_count', 'created_at', 'hashtags', 'is_flagged'
+            'id', 'author', 'views_count', 'created_at', 'hashtags', 'is_flagged', 'slides'
         )
 
     def get_likes_count(self, obj):

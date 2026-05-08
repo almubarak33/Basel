@@ -35,6 +35,12 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
   const [reported, setReported] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
+  // Photo carousel
+  const [slideIndex, setSlideIndex] = useState(0);
+  const touchStartX = useRef(null);
+  const isPhoto = video.post_type === 'photo';
+  const slides = video.slides || [];
+
   const isRestricted = video.is_age_restricted && !ageConfirmed;
 
   useEffect(() => {
@@ -48,6 +54,25 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
       el.currentTime = 0;
     }
   }, [isActive, isRestricted]);
+
+  // Auto-advance photo carousel every 3s when active and has audio
+  useEffect(() => {
+    if (!isPhoto || !isActive || !video.audio_file || slides.length < 2) return;
+    const id = setInterval(() => {
+      setSlideIndex((i) => (i + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [isPhoto, isActive, video.audio_file, slides.length]);
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0) setSlideIndex((i) => Math.min(i + 1, slides.length - 1));
+    else setSlideIndex((i) => Math.max(i - 1, 0));
+  };
 
   const togglePlay = () => {
     const el = videoRef.current;
@@ -175,18 +200,52 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
         </div>
       )}
 
-      {/* Video */}
-      <video
-        ref={videoRef}
-        src={video.video_file}
-        className={s.video}
-        loop
-        playsInline
-        onClick={handleDoubleTap}
-        onDoubleClick={isRestricted ? undefined : handleLike}
-      />
+      {/* Media: photo carousel or video */}
+      {isPhoto ? (
+        <div
+          className={s.carousel}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleDoubleTap}
+        >
+          {slides.length > 0 ? (
+            <img
+              src={slides[slideIndex]?.image}
+              alt=""
+              className={s.carouselImg}
+              draggable={false}
+            />
+          ) : (
+            <div className={s.noMedia}>لا توجد صور</div>
+          )}
+          {slides.length > 1 && (
+            <div className={s.carouselDots}>
+              {slides.map((_, i) => (
+                <span
+                  key={i}
+                  className={`${s.carouselDot} ${i === slideIndex ? s.carouselDotActive : ''}`}
+                  onClick={(e) => { e.stopPropagation(); setSlideIndex(i); }}
+                />
+              ))}
+            </div>
+          )}
+          {slides.length > 1 && (
+            <div className={s.slideCounter}>{slideIndex + 1} / {slides.length}</div>
+          )}
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          src={video.video_file}
+          className={s.video}
+          loop
+          playsInline
+          onClick={handleDoubleTap}
+          onDoubleClick={isRestricted ? undefined : handleLike}
+        />
+      )}
 
-      {paused && !isRestricted && (
+      {paused && !isRestricted && !isPhoto && (
         <div className={s.pauseIcon} onClick={togglePlay}>▶</div>
       )}
 
