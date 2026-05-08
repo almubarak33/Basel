@@ -8,28 +8,25 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
 
-  const avatarUrl = user?.avatar || `https://ui-avatars.com/api/?name=${user?.username}&background=1DA1F2&color=fff&size=40`;
+  const avatarUrl = user?.avatar ||
+    `https://ui-avatars.com/api/?name=${user?.username}&background=7c3aed&color=fff&size=40`;
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <nav className={styles.nav}>
       <div className={styles.inner}>
         <Link to="/" className={styles.logo}>SayHi</Link>
         <div className={styles.links}>
-          <Link to="/" className={`${styles.link} ${location.pathname === '/' ? styles.active : ''}`}>
-            <span>Home</span>
-          </Link>
-          <Link to="/explore" className={`${styles.link} ${location.pathname === '/explore' ? styles.active : ''}`}>
-            <span>Explore</span>
-          </Link>
+          <Link to="/" className={`${styles.link} ${isActive('/') ? styles.active : ''}`}>Home</Link>
+          <Link to="/explore" className={`${styles.link} ${isActive('/explore') ? styles.active : ''}`}>Explore</Link>
+          <Link to="/search" className={`${styles.link} ${isActive('/search') ? styles.active : ''}`}>Search</Link>
           {user && (
             <Link to={`/profile/${user.username}`} className={`${styles.link} ${location.pathname.startsWith('/profile') ? styles.active : ''}`}>
               <img src={avatarUrl} alt={user.username} className={styles.avatar} />
-              <span>{user.username}</span>
+              <span className={styles.username}>{user.username}</span>
             </Link>
           )}
         </div>

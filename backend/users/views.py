@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from .models import Follow
+from .models import Follow, Block
 from .serializers import RegisterSerializer, UserSerializer
 
 User = get_user_model()
@@ -75,4 +75,32 @@ def following_list(request, username):
     user = get_object_or_404(User, username=username)
     following = User.objects.filter(followers__follower=user)
     serializer = UserSerializer(following, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def block_user(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return Response({'detail': 'Cannot block yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+    Block.objects.get_or_create(blocker=request.user, blocked=target)
+    Follow.objects.filter(follower=request.user, following=target).delete()
+    Follow.objects.filter(follower=target, following=request.user).delete()
+    return Response({'detail': f'Blocked {username}.'})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unblock_user(request, username):
+    target = get_object_or_404(User, username=username)
+    Block.objects.filter(blocker=request.user, blocked=target).delete()
+    return Response({'detail': f'Unblocked {username}.'})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def blocked_list(request):
+    blocked = User.objects.filter(blocked_by__blocker=request.user)
+    serializer = UserSerializer(blocked, many=True, context={'request': request})
     return Response(serializer.data)

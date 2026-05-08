@@ -1,49 +1,48 @@
 .header {
-  background: white;
+  background: #13131a;
   padding: 16px 20px;
   border-radius: 16px 16px 0 0;
-  border-bottom: 1px solid #e1e8ed;
+  border-bottom: 1px solid #1e1e2e;
   position: sticky;
-  top: 64px;
+  top: 58px;
   z-index: 10;
   backdrop-filter: blur(10px);
 }
 
 .header h2 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 800;
+  color: #e7e9ea;
 }
 
 .loading {
   text-align: center;
-  padding: 40px;
-  color: #657786;
+  padding: 48px;
+  color: #52525b;
+  font-size: 0.9rem;
 }
 
 .empty {
   text-align: center;
   padding: 60px 20px;
-  color: #657786;
-  background: white;
+  color: #52525b;
+  background: #13131a;
   border-radius: 0 0 16px 16px;
-}
-
-.empty p {
-  margin-bottom: 8px;
+  line-height: 2;
 }
 
 .loadMore {
   display: block;
   width: 100%;
-  padding: 16px;
+  padding: 18px;
   text-align: center;
-  color: #1DA1F2;
+  color: #8b5cf6;
   font-weight: 600;
-  background: white;
+  font-size: 0.9rem;
+  background: #13131a;
   border-radius: 0 0 16px 16px;
   transition: background 0.2s;
+  border-top: 1px solid #1e1e2e;
 }
 
-.loadMore:hover {
-  background: #f5f8fa;
-}
+.loadMore:hover { background: #16161f; }

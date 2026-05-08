@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Follow
+from .models import Follow, Block
 
 User = get_user_model()
 
@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'bio', 'avatar', 'cover', 'website', 'location',
             'date_joined', 'followers_count', 'following_count',
-            'is_following', 'posts_count',
+            'is_following', 'is_blocked', 'posts_count',
         )
         read_only_fields = ('id', 'date_joined')
 
@@ -49,6 +49,12 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Follow.objects.filter(follower=request.user, following=obj).exists()
+        return False
+
+    def get_is_blocked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Block.objects.filter(blocker=request.user, blocked=obj).exists()
         return False
 
     def get_posts_count(self, obj):

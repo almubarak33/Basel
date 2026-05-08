@@ -2,71 +2,95 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: white;
-  border-bottom: 1px solid #e1e8ed;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid #1e1e2e;
 }
 
 .inner {
-  max-width: 600px;
+  max-width: 620px;
   margin: 0 auto;
-  padding: 0 20px;
-  height: 60px;
+  padding: 0 16px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .logo {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 900;
-  color: #1DA1F2;
+  background: linear-gradient(135deg, #7c3aed, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
 }
 
 .links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
 
 .link {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 7px 14px;
   border-radius: 50px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: #14171a;
-  transition: background 0.2s;
-}
-
-.link:hover { background: #f5f8fa; }
-
-.link.active {
-  color: #1DA1F2;
-  background: #e8f5fd;
-}
-
-.avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.logoutBtn {
-  padding: 8px 16px;
-  border-radius: 50px;
-  border: 2px solid #e1e8ed;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #657786;
-  background: white;
+  color: #71717a;
   transition: all 0.2s;
 }
 
+.link:hover { background: #1e1e2e; color: #e7e9ea; }
+
+.link.active {
+  color: #8b5cf6;
+  background: rgba(124,58,237,0.12);
+}
+
+.searchBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 50px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #71717a;
+  background: none;
+  transition: all 0.2s;
+}
+
+.searchBtn:hover { background: #1e1e2e; color: #e7e9ea; }
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2a2a3e;
+}
+
+.logoutBtn {
+  padding: 7px 14px;
+  border-radius: 50px;
+  border: 1px solid #2a2a3e;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #52525b;
+  background: transparent;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
 .logoutBtn:hover {
-  border-color: #e0245e;
-  color: #e0245e;
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239,68,68,0.08);
 }

@@ -1,7 +1,7 @@
 .loading {
   text-align: center;
-  padding: 40px;
-  color: #657786;
+  padding: 48px;
+  color: #52525b;
 }
 
 .coverWrap {
@@ -19,12 +19,13 @@
 .coverPlaceholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #1DA1F2, #0d8bd9);
+  background: linear-gradient(135deg, #1e1e2e 0%, #2a1a4e 50%, #1e1e2e 100%);
 }
 
 .profileCard {
-  background: white;
+  background: #13131a;
   padding: 0 20px 20px;
+  border-bottom: 1px solid #1e1e2e;
 }
 
 .avatarRow {
@@ -32,103 +33,112 @@
   justify-content: space-between;
   align-items: flex-end;
   margin-top: -40px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 82px;
+  height: 82px;
   border-radius: 50%;
-  border: 4px solid white;
+  border: 4px solid #13131a;
   object-fit: cover;
+  box-shadow: 0 0 0 2px #7c3aed;
 }
 
-.actions {}
+.actions { display: flex; gap: 8px; padding-bottom: 4px; }
 
-.editBtn, .followBtn, .unfollowBtn {
-  padding: 8px 20px;
+.editBtn, .followBtn, .unfollowBtn, .blockBtn, .unblockedBtn {
+  padding: 8px 18px;
   border-radius: 50px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   transition: all 0.2s;
 }
 
 .editBtn {
-  border: 2px solid #e1e8ed;
-  color: #14171a;
-  background: white;
+  border: 1px solid #2a2a3e;
+  color: #a1a1aa;
+  background: transparent;
 }
 
-.editBtn:hover { background: #f5f8fa; }
+.editBtn:hover { border-color: #7c3aed; color: #e7e9ea; }
 
 .followBtn {
-  background: #14171a;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
   color: white;
+  box-shadow: 0 2px 10px rgba(124,58,237,0.35);
 }
 
-.followBtn:hover { background: #333; }
+.followBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(124,58,237,0.45); }
 
 .unfollowBtn {
-  background: white;
-  border: 2px solid #e0245e;
-  color: #e0245e;
+  border: 1px solid #3f3f5a;
+  color: #a1a1aa;
+  background: transparent;
 }
 
-.unfollowBtn:hover { background: #fce8ef; }
+.unfollowBtn:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
+
+.blockBtn {
+  border: 1px solid #3f3f5a;
+  color: #71717a;
+  background: transparent;
+  font-size: 0.82rem;
+}
+
+.blockBtn:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
+
+.unblockedBtn {
+  border: 1px solid rgba(239,68,68,0.4);
+  color: #ef4444;
+  background: rgba(239,68,68,0.08);
+  font-size: 0.82rem;
+}
 
 .info {}
 
 .name {
   font-size: 1.2rem;
   font-weight: 800;
+  color: #e7e9ea;
 }
 
-.handle {
-  color: #657786;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-}
+.handle { color: #52525b; font-size: 0.88rem; margin-bottom: 8px; }
 
-.bio {
-  margin: 8px 0;
-  line-height: 1.5;
-}
+.bio { color: #a1a1aa; line-height: 1.5; margin: 8px 0; font-size: 0.93rem; }
 
 .meta {
   display: flex;
   gap: 16px;
-  color: #657786;
-  font-size: 0.9rem;
-  margin-bottom: 12px;
+  color: #52525b;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
 }
 
-.meta a { color: #1DA1F2; }
+.meta a { color: #8b5cf6; }
 
-.stats {
-  display: flex;
-  gap: 20px;
-  font-size: 0.9rem;
-  color: #657786;
-}
+.stats { display: flex; gap: 20px; }
 
-.stats strong { color: #14171a; }
+.stat { display: flex; flex-direction: column; align-items: flex-start; }
+
+.stat strong { color: #e7e9ea; font-size: 0.95rem; }
+.stat span { color: #52525b; font-size: 0.8rem; }
 
 .postsHeader {
-  background: white;
-  padding: 16px 20px;
-  border-top: 1px solid #e1e8ed;
-  border-bottom: 1px solid #e1e8ed;
+  background: #13131a;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e1e2e;
 }
 
-.postsHeader h3 {
-  font-size: 1rem;
-  font-weight: 700;
-}
+.postsHeader h3 { font-size: 0.9rem; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 0.06em; }
 
-.empty {
+.empty, .blocked {
   text-align: center;
-  padding: 40px;
-  color: #657786;
-  background: white;
+  padding: 48px 20px;
+  color: #52525b;
+  background: #13131a;
   border-radius: 0 0 16px 16px;
+  font-size: 0.92rem;
+  line-height: 1.7;
 }
