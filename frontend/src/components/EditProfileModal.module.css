@@ -1,0 +1,92 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e1e8ed;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+}
+
+.header h3 {
+  flex: 1;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.close {
+  background: none;
+  font-size: 1rem;
+  color: #14171a;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close:hover { background: #f5f8fa; }
+
+.saveBtn {
+  padding: 8px 18px;
+  background: #14171a;
+  color: white;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.saveBtn:disabled { opacity: 0.6; }
+
+.form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.85rem;
+  color: #657786;
+  font-weight: 600;
+}
+
+.field input, .field textarea {
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.field input:focus, .field textarea:focus {
+  border-color: #1DA1F2;
+}
+
+.field textarea { resize: none; }

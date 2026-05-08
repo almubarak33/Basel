@@ -1,0 +1,81 @@
+.form {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.right { flex: 1; }
+
+.textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 4px 0;
+  background: transparent;
+}
+
+.textarea::placeholder { color: #aab8c2; }
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.imageLabel {
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.imageLabel:hover { background: #e8f5fd; }
+
+.imageName {
+  font-size: 0.75rem;
+  color: #657786;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.counter {
+  color: #aab8c2;
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+.counter.warn { color: #ffad1f; }
+
+.submitBtn {
+  padding: 8px 18px;
+  background: #1DA1F2;
+  color: white;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) { background: #1a91da; }
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

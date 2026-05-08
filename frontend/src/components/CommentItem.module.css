@@ -1,0 +1,37 @@
+.item {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.body { flex: 1; }
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.name { font-weight: 700; font-size: 0.9rem; }
+.name:hover { text-decoration: underline; }
+
+.handle { color: #657786; font-size: 0.8rem; }
+
+.time { color: #657786; font-size: 0.8rem; }
+
+.content {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}

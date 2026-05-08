@@ -1,0 +1,108 @@
+.card {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 1px solid #e1e8ed;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.card:hover { background: #f9fbfc; }
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.body { flex: 1; min-width: 0; }
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.authorName {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.authorName:hover { text-decoration: underline; }
+
+.handle {
+  color: #657786;
+  font-size: 0.85rem;
+}
+
+.dot { color: #657786; font-size: 0.85rem; }
+
+.time {
+  color: #657786;
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.deleteBtn {
+  background: none;
+  color: #657786;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.deleteBtn:hover {
+  background: #fce8ef;
+  color: #e0245e;
+}
+
+.content {
+  line-height: 1.5;
+  word-break: break-word;
+  margin-bottom: 10px;
+}
+
+.postImage {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+.actions {
+  display: flex;
+  gap: 24px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  color: #657786;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 50px;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: #e8f5fd;
+  color: #1DA1F2;
+}
+
+.actionBtn.liked {
+  color: #e0245e;
+}
+
+.actionBtn.liked:hover {
+  background: #fce8ef;
+  color: #e0245e;
+}

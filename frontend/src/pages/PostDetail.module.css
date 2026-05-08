@@ -1,0 +1,29 @@
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #657786;
+}
+
+.header {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.header h2 { font-size: 1.1rem; font-weight: 800; }
+
+.back {
+  background: none;
+  font-size: 1rem;
+  color: #1DA1F2;
+  font-weight: 600;
+}
+
+.comments {
+  background: white;
+  border-radius: 0 0 16px 16px;
+}
