@@ -1,11 +1,18 @@
+import os
 import random
+import subprocess
+import tempfile
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db.models import Count
-from .models import Video, VideoLike, VideoComment, Hashtag, WatchedVideo
+from django.db.models import Count, F
+from django.http import FileResponse, Http404
+from .models import (
+    Video, VideoLike, VideoComment, Hashtag,
+    WatchedVideo, UserInterest, VideoReport,
+)
 from .serializers import VideoSerializer, VideoCommentSerializer, HashtagSerializer
 
 User = get_user_model()
@@ -17,18 +24,42 @@ def get_blocked_ids(user):
     return blocking | blocked_by
 
 
+def _boost_interests(user, hashtag_names, delta=1):
+    """Increment UserInterest scores for the given hashtags."""
+    for name in hashtag_names:
+        tag, _ = Hashtag.objects.get_or_create(name=name.lower())
+        obj, created = UserInterest.objects.get_or_create(user=user, hashtag=tag)
+        if not created:
+            UserInterest.objects.filter(pk=obj.pk).update(score=F('score') + delta)
+
+
 class ForYouFeedView(generics.ListAPIView):
-    """FYP: mix of following + trending + unseen videos."""
+    """FYP: interest-based > following > trending > random."""
     serializer_class = VideoSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
         blocked = get_blocked_ids(user)
-        watched_ids = user.watched.values_list('video_id', flat=True)
-        following_ids = user.following.values_list('following_id', flat=True)
+        watched_ids = set(user.watched.values_list('video_id', flat=True))
+        following_ids = set(user.following.values_list('following_id', flat=True))
 
-        # Videos from following (unseen first)
+        # Tier 1: videos whose hashtags match user's top interests (personalized)
+        top_tags = list(
+            user.interests.order_by('-score').values_list('hashtag_id', flat=True)[:10]
+        )
+        interest_vids = []
+        if top_tags:
+            interest_vids = list(
+                Video.objects.filter(hashtags__in=top_tags)
+                .exclude(author_id__in=blocked)
+                .exclude(id__in=watched_ids)
+                .exclude(author=user)
+                .distinct()
+                .order_by('-created_at')[:20]
+            )
+
+        # Tier 2: videos from followed users (unseen)
         following_vids = list(
             Video.objects.filter(author_id__in=following_ids)
             .exclude(author_id__in=blocked)
@@ -36,7 +67,7 @@ class ForYouFeedView(generics.ListAPIView):
             .order_by('-created_at')[:20]
         )
 
-        # Trending: most liked last 7 days (unseen)
+        # Tier 3: trending (most liked, unseen)
         trending = list(
             Video.objects.annotate(like_count=Count('likes'))
             .exclude(author_id__in=blocked)
@@ -45,19 +76,25 @@ class ForYouFeedView(generics.ListAPIView):
             .order_by('-like_count')[:20]
         )
 
-        # Merge and deduplicate
-        seen_ids = {v.id for v in following_vids}
-        merged = following_vids + [v for v in trending if v.id not in seen_ids]
+        # Merge with deduplication
+        seen = set()
+        merged = []
+        for v in interest_vids + following_vids + trending:
+            if v.id not in seen:
+                seen.add(v.id)
+                merged.append(v)
 
+        # Tier 4: random fallback
         if len(merged) < 5:
-            # Fallback: any unwatched video
             extras = list(
                 Video.objects.exclude(author_id__in=blocked)
                 .exclude(id__in=watched_ids)
                 .order_by('?')[:20]
             )
-            seen_ids2 = {v.id for v in merged}
-            merged += [v for v in extras if v.id not in seen_ids2]
+            for v in extras:
+                if v.id not in seen:
+                    seen.add(v.id)
+                    merged.append(v)
 
         random.shuffle(merged)
         return merged[:30]
@@ -83,7 +120,40 @@ class VideoUploadView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        video = serializer.save(author=self.request.user)
+        audio = self.request.FILES.get('audio_file')
+        if audio:
+            self._merge_audio(video, audio)
+
+    def _merge_audio(self, video, audio_file):
+        """Merge uploaded audio track into the video using ffmpeg."""
+        video_path = video.video_file.path
+        suffix = os.path.splitext(audio_file.name)[1] or '.mp3'
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_audio:
+            for chunk in audio_file.chunks():
+                tmp_audio.write(chunk)
+            audio_path = tmp_audio.name
+
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp_out:
+            out_path = tmp_out.name
+
+        try:
+            subprocess.run([
+                'ffmpeg', '-y',
+                '-i', video_path,
+                '-i', audio_path,
+                '-c:v', 'copy', '-c:a', 'aac',
+                '-map', '0:v:0', '-map', '1:a:0',
+                '-shortest', out_path,
+            ], check=True, capture_output=True)
+            import shutil
+            shutil.copy2(out_path, video_path)
+        except subprocess.CalledProcessError:
+            pass  # keep original video if merge fails
+        finally:
+            os.unlink(audio_path)
+            if os.path.exists(out_path):
+                os.unlink(out_path)
 
 
 class VideoDetailView(generics.RetrieveDestroyAPIView):
@@ -93,9 +163,12 @@ class VideoDetailView(generics.RetrieveDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         video = self.get_object()
-        # Mark as watched and increment views
         Video.objects.filter(pk=video.pk).update(views_count=video.views_count + 1)
         WatchedVideo.objects.get_or_create(user=request.user, video=video)
+        # Boost interests for this video's hashtags
+        tag_names = list(video.hashtags.values_list('name', flat=True))
+        if tag_names:
+            _boost_interests(request.user, tag_names, delta=1)
         serializer = self.get_serializer(video)
         return Response(serializer.data)
 
@@ -120,8 +193,11 @@ class HashtagVideosView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        tag = get_object_or_404(Hashtag, name=self.kwargs['name'].lower())
+        name = self.kwargs['name'].lower()
+        tag = get_object_or_404(Hashtag, name=name)
         blocked = get_blocked_ids(self.request.user)
+        # Boost interest for this hashtag
+        _boost_interests(self.request.user, [name], delta=2)
         return tag.videos.exclude(author_id__in=blocked)
 
 
@@ -138,10 +214,15 @@ class SearchView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        q = self.request.query_params.get('q', '')
+        q = self.request.query_params.get('q', '').strip()
         if not q:
             return Video.objects.none()
         blocked = get_blocked_ids(self.request.user)
+        # Boost interest for hashtag-style search terms
+        import re
+        tags = re.findall(r'#?(\w+)', q)
+        if tags:
+            _boost_interests(self.request.user, tags, delta=3)
         return Video.objects.filter(caption__icontains=q).exclude(author_id__in=blocked)
 
 
@@ -171,3 +252,60 @@ def unlike_video(request, pk):
     video = get_object_or_404(Video, pk=pk)
     VideoLike.objects.filter(user=request.user, video=video).delete()
     return Response({'likes_count': video.likes.count(), 'is_liked': False})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def report_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    reason = request.data.get('reason', 'other')
+    if reason not in dict(VideoReport.REASONS):
+        reason = 'other'
+    _, created = VideoReport.objects.get_or_create(
+        video=video, reporter=request.user,
+        defaults={'reason': reason},
+    )
+    # Auto-flag if too many reports
+    report_count = video.reports.count()
+    if report_count >= 5:
+        Video.objects.filter(pk=pk).update(is_flagged=True)
+    return Response({'reported': True, 'already_reported': not created})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def download_video(request, pk):
+    """Stream video with SayHi watermark burned in via ffmpeg."""
+    video = get_object_or_404(Video, pk=pk)
+    input_path = video.video_file.path
+
+    if not os.path.exists(input_path):
+        raise Http404
+
+    out_path = tempfile.mktemp(suffix='.mp4')
+    try:
+        subprocess.run([
+            'ffmpeg', '-y', '-i', input_path,
+            '-vf', (
+                "drawtext=text='@SayHi':"
+                "x=w-tw-15:y=h-th-15:"
+                "fontsize=28:fontcolor=white:"
+                "box=1:boxcolor=black@0.45:boxborderw=6"
+            ),
+            '-codec:a', 'copy',
+            '-preset', 'ultrafast',
+            out_path,
+        ], check=True, capture_output=True, timeout=120)
+        serve_path = out_path
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        serve_path = input_path  # fallback without watermark
+
+    # FileResponse closes the file handle after sending; temp file persists until OS cleanup
+    response = FileResponse(
+        open(serve_path, 'rb'),
+        content_type='video/mp4',
+        as_attachment=True,
+        filename=f'sayhi_{pk}.mp4',
+    )
+    response['X-Accel-Buffering'] = 'no'
+    return response

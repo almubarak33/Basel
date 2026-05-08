@@ -5,6 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import CommentsDrawer from './CommentsDrawer';
 import s from './VideoItem.module.css';
 
+const REPORT_REASONS = [
+  { key: 'nsfw', label: '🔞 محتوى جنسي' },
+  { key: 'violence', label: '⚠️ عنف' },
+  { key: 'harassment', label: '🚫 تحرش' },
+  { key: 'spam', label: '📢 سبام' },
+  { key: 'other', label: '❓ أخرى' },
+];
+
 function renderCaption(caption) {
   if (!caption) return null;
   return caption.split(/(#\w+)/g).map((part, i) =>
@@ -22,18 +30,24 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
   const [showComments, setShowComments] = useState(false);
   const [likeAnim, setLikeAnim] = useState(false);
   const [lastTap, setLastTap] = useState(0);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reported, setReported] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const isRestricted = video.is_age_restricted && !ageConfirmed;
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    if (isActive) {
+    if (isActive && !isRestricted) {
       el.play().catch(() => {});
       setPaused(false);
     } else {
       el.pause();
       el.currentTime = 0;
     }
-  }, [isActive]);
+  }, [isActive, isRestricted]);
 
   const togglePlay = () => {
     const el = videoRef.current;
@@ -43,6 +57,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
   };
 
   const handleDoubleTap = () => {
+    if (isRestricted) return;
     const now = Date.now();
     if (now - lastTap < 300) handleLike();
     setLastTap(now);
@@ -66,6 +81,36 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
     onDelete(video.id);
   };
 
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(
+        `${api.defaults.baseURL}/videos/${video.id}/download/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sayhi_${video.id}.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('فشل التحميل. حاول مجدداً.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleReport = async (reason) => {
+    setShowReport(false);
+    try {
+      await api.post(`/videos/${video.id}/report/`, { reason });
+      setReported(true);
+    } catch { /* already reported */ }
+  };
+
   const avatarUrl = video.author.avatar ||
     `https://ui-avatars.com/api/?name=${video.author.username}&background=fe2c55&color=fff&size=48`;
 
@@ -73,6 +118,35 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
 
   return (
     <div className={s.item}>
+      {/* Age-restriction gate */}
+      {isRestricted && (
+        <div className={s.ageGate}>
+          <span className={s.ageGateIcon}>🔞</span>
+          <p className={s.ageGateText}>هذا المحتوى مقيد للبالغين فقط</p>
+          <button className={s.ageGateBtn} onClick={() => setAgeConfirmed(true)}>
+            تأكيد — عمري +18
+          </button>
+        </div>
+      )}
+
+      {/* Age badge (visible after confirm) */}
+      {video.is_age_restricted && ageConfirmed && (
+        <span className={s.ageBadge}>18+</span>
+      )}
+
+      {/* Report menu */}
+      {showReport && (
+        <div className={s.reportMenu}>
+          <p style={{ color: '#888', fontSize: '.72rem', marginBottom: 2 }}>الإبلاغ عن المحتوى</p>
+          {REPORT_REASONS.map((r) => (
+            <button key={r.key} className={s.reportOption + (r.key === 'nsfw' ? ` ${s.danger}` : '')} onClick={() => handleReport(r.key)}>
+              {r.label}
+            </button>
+          ))}
+          <button className={s.reportOption} onClick={() => setShowReport(false)}>إلغاء</button>
+        </div>
+      )}
+
       {/* Video */}
       <video
         ref={videoRef}
@@ -82,15 +156,13 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
         playsInline
         muted={false}
         onClick={handleDoubleTap}
-        onDoubleClick={handleLike}
+        onDoubleClick={isRestricted ? undefined : handleLike}
       />
 
-      {/* Pause indicator */}
-      {paused && (
+      {paused && !isRestricted && (
         <div className={s.pauseIcon} onClick={togglePlay}>▶</div>
       )}
 
-      {/* Double-tap like animation */}
       {likeAnim && <div className={s.likeAnim}>❤️</div>}
 
       {/* Bottom info */}
@@ -143,6 +215,18 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
             }
           }}
         />
+        <ActionBtn
+          icon={downloading ? '⏳' : '⬇️'}
+          count="Save"
+          onClick={handleDownload}
+        />
+        {user?.username !== video.author.username && (
+          <ActionBtn
+            icon={reported ? '✅' : '🚩'}
+            count={reported ? 'Reported' : 'Report'}
+            onClick={() => !reported && setShowReport((v) => !v)}
+          />
+        )}
         <button className={s.actionBtn} onClick={onNext}>
           <span style={{ fontSize: '1.5rem' }}>⬇</span>
           <span className={s.actionLabel}>Next</span>

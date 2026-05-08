@@ -119,3 +119,32 @@
 
 .submitBtn:hover:not(:disabled) { background: #e6254d; transform: scale(1.02); }
 .submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.audioLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+  font-size: .88rem;
+  cursor: pointer;
+  padding: 12px 14px;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+  transition: border-color .2s;
+}
+.audioLabel:hover { border-color: #25f4ee; }
+.audioName { font-size: .78rem; color: #25f4ee; }
+.audioNote { font-size: .72rem; color: #444; }
+
+.ageRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+}
+.ageRow label { font-size: .88rem; color: #888; cursor: pointer; }
+.ageRow input[type="checkbox"] { width: 16px; height: 16px; accent-color: #fe2c55; cursor: pointer; }

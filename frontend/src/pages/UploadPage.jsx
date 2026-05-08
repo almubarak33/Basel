@@ -8,7 +8,9 @@ export default function UploadPage() {
   const [video, setVideo] = useState(null);
   const [preview, setPreview] = useState(null);
   const [thumb, setThumb] = useState(null);
+  const [audio, setAudio] = useState(null);
   const [caption, setCaption] = useState('');
+  const [ageRestricted, setAgeRestricted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileRef = useRef();
@@ -21,6 +23,7 @@ export default function UploadPage() {
   };
 
   const handleThumb = (e) => setThumb(e.target.files[0]);
+  const handleAudio = (e) => setAudio(e.target.files[0]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +33,9 @@ export default function UploadPage() {
       const fd = new FormData();
       fd.append('video_file', video);
       fd.append('caption', caption);
+      fd.append('is_age_restricted', ageRestricted);
       if (thumb) fd.append('thumbnail', thumb);
+      if (audio) fd.append('audio_file', audio);
       await api.post('/videos/upload/', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / e.total)),
@@ -67,7 +72,7 @@ export default function UploadPage() {
         <form className={s.form} onSubmit={handleSubmit}>
           <textarea
             className={s.caption}
-            placeholder="Write a caption… #hashtags"
+            placeholder="اكتب وصفاً… #هاشتاق"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             maxLength={300}
@@ -75,11 +80,33 @@ export default function UploadPage() {
           />
           <span className={s.captionCount}>{300 - caption.length}</span>
 
+          {/* Thumbnail */}
           <label className={s.thumbLabel}>
-            🖼 Add thumbnail (optional)
+            🖼 إضافة صورة مصغرة (اختياري)
             <input type="file" accept="image/*" hidden onChange={handleThumb} />
           </label>
           {thumb && <p className={s.thumbName}>✓ {thumb.name}</p>}
+
+          {/* Audio / Music */}
+          <label className={s.audioLabel}>
+            🎵 إضافة موسيقى / صوت (اختياري)
+            <input type="file" accept="audio/*" hidden onChange={handleAudio} />
+          </label>
+          {audio
+            ? <p className={s.audioName}>🎵 {audio.name}</p>
+            : <p className={s.audioNote}>MP3, AAC, WAV — سيتم دمجه مع الفيديو</p>
+          }
+
+          {/* Age restriction */}
+          <div className={s.ageRow}>
+            <input
+              id="age18"
+              type="checkbox"
+              checked={ageRestricted}
+              onChange={(e) => setAgeRestricted(e.target.checked)}
+            />
+            <label htmlFor="age18">🔞 محتوى للبالغين فقط (+18)</label>
+          </div>
 
           {loading && (
             <div className={s.progressWrap}>
@@ -89,7 +116,7 @@ export default function UploadPage() {
           )}
 
           <button className={s.submitBtn} type="submit" disabled={!video || loading}>
-            {loading ? 'Uploading…' : 'Post Video'}
+            {loading ? 'جارٍ الرفع…' : 'نشر الفيديو'}
           </button>
         </form>
       </div>

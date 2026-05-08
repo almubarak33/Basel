@@ -3,6 +3,7 @@ from .views import (
     ForYouFeedView, FollowingFeedView, VideoUploadView, VideoDetailView,
     UserVideosView, HashtagVideosView, TrendingHashtagsView, SearchView,
     VideoCommentListCreateView, like_video, unlike_video,
+    report_video, download_video,
 )
 
 urlpatterns = [
@@ -16,5 +17,7 @@ urlpatterns = [
     path('<int:pk>/like/', like_video),
     path('<int:pk>/unlike/', unlike_video),
     path('<int:pk>/comments/', VideoCommentListCreateView.as_view()),
+    path('<int:pk>/report/', report_video),
+    path('<int:pk>/download/', download_video),
     path('user/<str:username>/', UserVideosView.as_view()),
 ]

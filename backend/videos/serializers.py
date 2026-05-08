@@ -33,11 +33,11 @@ class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
         fields = (
-            'id', 'author', 'video_file', 'thumbnail', 'caption',
+            'id', 'author', 'video_file', 'thumbnail', 'audio_file', 'caption',
             'hashtags', 'views_count', 'likes_count', 'comments_count',
-            'is_liked', 'created_at',
+            'is_liked', 'is_age_restricted', 'is_flagged', 'created_at',
         )
-        read_only_fields = ('id', 'author', 'views_count', 'created_at', 'hashtags')
+        read_only_fields = ('id', 'author', 'views_count', 'created_at', 'hashtags', 'is_flagged')
 
     def get_likes_count(self, obj):
         return obj.likes.count()
