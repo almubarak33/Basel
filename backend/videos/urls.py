@@ -1,0 +1,20 @@
+from django.urls import path
+from .views import (
+    ForYouFeedView, FollowingFeedView, VideoUploadView, VideoDetailView,
+    UserVideosView, HashtagVideosView, TrendingHashtagsView, SearchView,
+    VideoCommentListCreateView, like_video, unlike_video,
+)
+
+urlpatterns = [
+    path('foryou/', ForYouFeedView.as_view()),
+    path('following/', FollowingFeedView.as_view()),
+    path('upload/', VideoUploadView.as_view()),
+    path('search/', SearchView.as_view()),
+    path('trending/', TrendingHashtagsView.as_view()),
+    path('hashtag/<str:name>/', HashtagVideosView.as_view()),
+    path('<int:pk>/', VideoDetailView.as_view()),
+    path('<int:pk>/like/', like_video),
+    path('<int:pk>/unlike/', unlike_video),
+    path('<int:pk>/comments/', VideoCommentListCreateView.as_view()),
+    path('user/<str:username>/', UserVideosView.as_view()),
+]

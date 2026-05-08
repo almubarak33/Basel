@@ -1,0 +1,121 @@
+.page { height: 100vh; background: #000; display: flex; flex-direction: column; }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.header h2 { font-size: 1rem; font-weight: 700; }
+
+.back { color: #fff; font-size: 1.2rem; padding: 4px; }
+
+.body { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+
+.dropZone {
+  border: 2px dashed #333;
+  border-radius: 16px;
+  padding: 48px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color .2s;
+  background: #0a0a0a;
+}
+
+.dropZone:hover { border-color: #fe2c55; }
+
+.uploadIcon { font-size: 3rem; }
+
+.dropText { font-size: 1rem; font-weight: 700; color: #fff; }
+.dropSub { font-size: .8rem; color: #555; }
+
+.previewWrap { display: flex; flex-direction: column; gap: 10px; }
+
+.preview {
+  width: 100%;
+  border-radius: 12px;
+  max-height: 300px;
+  background: #111;
+}
+
+.changeVideo {
+  color: #fe2c55;
+  font-size: .85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.form { display: flex; flex-direction: column; gap: 12px; }
+
+.caption {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: .95rem;
+  resize: none;
+  line-height: 1.5;
+}
+
+.caption:focus { border-color: #fe2c55; }
+.caption::placeholder { color: #444; }
+
+.captionCount { font-size: .75rem; color: #444; text-align: right; }
+
+.thumbLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+  font-size: .88rem;
+  cursor: pointer;
+  padding: 12px 14px;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+  transition: border-color .2s;
+}
+
+.thumbLabel:hover { border-color: #333; }
+
+.thumbName { font-size: .78rem; color: #25f4ee; }
+
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #111;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 28px;
+  padding: 0 10px;
+}
+
+.progressBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #fe2c55, #ff6b81);
+  transition: width .2s;
+}
+
+.submitBtn {
+  padding: 14px;
+  background: #fe2c55;
+  color: white;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: all .2s;
+  margin-top: 8px;
+}
+
+.submitBtn:hover:not(:disabled) { background: #e6254d; transform: scale(1.02); }
+.submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }

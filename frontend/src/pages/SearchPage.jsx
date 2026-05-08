@@ -1,56 +1,77 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
-import PostCard from '../components/PostCard';
-import styles from './SearchPage.module.css';
-import homeStyles from './Home.module.css';
+import s from './SearchPage.module.css';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [posts, setPosts] = useState([]);
+  const [results, setResults] = useState([]);
+  const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const inputRef = useRef();
 
-  useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
+  useEffect(() => {
+    api.get('/videos/trending/').then(({ data }) => setTrending(data.results || data)).catch(() => {});
+  }, []);
 
   const handleSearch = async (e) => {
     e?.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
-    setSearched(true);
     try {
-      const { data } = await api.get(`/posts/search/?q=${encodeURIComponent(query)}`);
-      setPosts(data.results || data);
-    } catch { setPosts([]); } finally { setLoading(false); }
+      const { data } = await api.get(`/videos/search/?q=${encodeURIComponent(query)}`);
+      setResults(data.results || data);
+    } catch { setResults([]); } finally { setLoading(false); }
   };
 
-  const handleUpdate = (updated) => setPosts((prev) => prev.map((p) => p.id === updated.id ? updated : p));
-  const handleDelete = (id) => setPosts((prev) => prev.filter((p) => p.id !== id));
+  const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n ?? 0;
 
   return (
-    <div>
-      <div className={styles.header}>
-        <h2>Search</h2>
-        <form className={styles.searchForm} onSubmit={handleSearch}>
-          <input
-            ref={inputRef}
-            className={styles.input}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search posts, #hashtags…"
-          />
-          <button className={styles.btn} type="submit">Go</button>
-        </form>
+    <div className={s.page}>
+      <form className={s.searchBar} onSubmit={handleSearch}>
+        <span className={s.searchIcon}>🔍</span>
+        <input
+          className={s.input}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search videos, #hashtags…"
+          autoFocus
+        />
+        {query && <button type="button" className={s.clear} onClick={() => { setQuery(''); setResults([]); }}>✕</button>}
+      </form>
+
+      <div className={s.body}>
+        {results.length > 0 ? (
+          <div className={s.grid}>
+            {results.map((v) => (
+              <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
+                {v.thumbnail
+                  ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
+                  : <video src={v.video_file} className={s.thumbImg} muted />
+                }
+                <div className={s.thumbOverlay}>▶ {fmt(v.views_count)}</div>
+              </Link>
+            ))}
+          </div>
+        ) : query && !loading ? (
+          <p className={s.empty}>No results for "{query}"</p>
+        ) : (
+          <>
+            <h3 className={s.sectionTitle}>🔥 Trending</h3>
+            <div className={s.tags}>
+              {trending.map((tag) => (
+                <Link key={tag.id} to={`/hashtag/${tag.name}`} className={s.tag}>
+                  <span className={s.hash}>#</span>
+                  <div>
+                    <div className={s.tagName}>{tag.name}</div>
+                    <div className={s.tagCount}>{fmt(tag.videos_count)} videos</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+        {loading && <div className={s.loader}><div className={s.spinner} /></div>}
       </div>
-      {loading ? (
-        <div className={homeStyles.loading}>Searching…</div>
-      ) : searched && posts.length === 0 ? (
-        <div className={homeStyles.empty}><p>No results for "{query}"</p></div>
-      ) : (
-        posts.map((post) => (
-          <PostCard key={post.id} post={post} onUpdate={handleUpdate} onDelete={handleDelete} onQuote={() => {}} />
-        ))
-      )}
     </div>
   );
 }

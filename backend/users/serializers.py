@@ -26,24 +26,32 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
+    videos_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
-    posts_count = serializers.SerializerMethodField()
+    is_blocked = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
-            'id', 'username', 'email', 'first_name', 'last_name',
-            'bio', 'avatar', 'cover', 'website', 'location',
-            'date_joined', 'followers_count', 'following_count',
-            'is_following', 'is_blocked', 'posts_count',
+            'id', 'username', 'email', 'bio', 'avatar', 'website',
+            'location', 'is_live', 'live_title', 'date_joined',
+            'followers_count', 'following_count', 'videos_count',
+            'likes_count', 'is_following', 'is_blocked',
         )
-        read_only_fields = ('id', 'date_joined')
+        read_only_fields = ('id', 'date_joined', 'is_live', 'live_title')
 
     def get_followers_count(self, obj):
         return obj.followers.count()
 
     def get_following_count(self, obj):
         return obj.following.count()
+
+    def get_videos_count(self, obj):
+        return obj.videos.count()
+
+    def get_likes_count(self, obj):
+        return sum(v.likes.count() for v in obj.videos.all())
 
     def get_is_following(self, obj):
         request = self.context.get('request')
@@ -57,11 +65,8 @@ class UserSerializer(serializers.ModelSerializer):
             return Block.objects.filter(blocker=request.user, blocked=obj).exists()
         return False
 
-    def get_posts_count(self, obj):
-        return obj.posts.count()
-
 
 class UserMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'avatar')
+        fields = ('id', 'username', 'avatar', 'is_live')

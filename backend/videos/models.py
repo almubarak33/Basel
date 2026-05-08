@@ -1,0 +1,69 @@
+import re
+from django.db import models
+from django.conf import settings
+
+
+class Hashtag(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'#{self.name}'
+
+
+class Video(models.Model):
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='videos')
+    video_file = models.FileField(upload_to='videos/')
+    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
+    caption = models.TextField(max_length=300, blank=True)
+    hashtags = models.ManyToManyField(Hashtag, blank=True, related_name='videos')
+    views_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        tags = re.findall(r'#(\w+)', self.caption)
+        self.hashtags.clear()
+        for tag in set(tags):
+            obj, _ = Hashtag.objects.get_or_create(name=tag.lower())
+            self.hashtags.add(obj)
+
+    def likes_count(self):
+        return self.likes.count()
+
+    def comments_count(self):
+        return self.comments.count()
+
+    def __str__(self):
+        return f'{self.author.username}: {self.caption[:40]}'
+
+
+class VideoLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='video_likes')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'video')
+
+
+class VideoComment(models.Model):
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='video_comments')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField(max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class WatchedVideo(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='watched')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='watched_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'video')
