@@ -3,27 +3,29 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: #000;
+  height: 62px;
+  background: rgba(0,0,0,0.95);
   border-top: 1px solid #1a1a1a;
   display: flex;
   align-items: center;
   justify-content: space-around;
   z-index: 200;
   padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(10px);
 }
 
 .btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   color: #888;
-  font-size: .62rem;
+  font-size: .58rem;
   font-weight: 600;
-  padding: 4px 12px;
+  padding: 4px 8px;
   transition: color .2s;
   flex: 1;
+  position: relative;
 }
 
 .btn.active { color: #fff; }
@@ -49,13 +51,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
+  width: 44px;
   height: 30px;
   background: linear-gradient(90deg, #25f4ee 0%, #fff 45%, #fe2c55 100%);
   border-radius: 8px;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 300;
   color: #000;
   line-height: 1;
   box-shadow: 0 0 10px rgba(254,44,85,0.4);
+}
+
+/* Notification badge */
+.badge {
+  position: absolute;
+  top: 1px;
+  right: 8px;
+  background: #fe2c55;
+  color: #fff;
+  font-size: .55rem;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid #000;
 }

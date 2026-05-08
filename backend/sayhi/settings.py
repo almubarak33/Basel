@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     'users',
     'videos',
     'livestreams',
+    'chats',
+    'notifications',
 ]
 
 MIDDLEWARE = [

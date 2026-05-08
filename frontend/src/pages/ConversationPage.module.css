@@ -1,0 +1,44 @@
+.page { height: 100vh; background: #000; display: flex; flex-direction: column; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid #111;
+}
+.header h2 { font-size: 1rem; font-weight: 700; }
+.back { color: #fff; font-size: 1.3rem; padding: 4px; }
+
+.messages {
+  flex: 1; overflow-y: auto; padding: 16px; display: flex;
+  flex-direction: column; gap: 8px;
+}
+
+.bubble {
+  max-width: 75%; padding: 10px 14px; border-radius: 18px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.mine { align-self: flex-end; background: #fe2c55; border-bottom-right-radius: 4px; }
+.theirs { align-self: flex-start; background: #1a1a1a; border-bottom-left-radius: 4px; }
+
+.bubbleText { font-size: .9rem; color: #fff; line-height: 1.45; }
+.bubbleTime { font-size: .65rem; color: rgba(255,255,255,0.6); align-self: flex-end; }
+
+.inputRow {
+  display: flex; gap: 10px;
+  padding: 12px 16px; border-top: 1px solid #111;
+  background: #000;
+}
+.input {
+  flex: 1; background: #111; border: 1px solid #222;
+  border-radius: 24px; padding: 10px 16px;
+  color: #fff; font-size: .92rem;
+}
+.input:focus { border-color: #fe2c55; }
+.input::placeholder { color: #444; }
+
+.sendBtn {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: #fe2c55; color: #fff; font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: opacity .2s;
+}
+.sendBtn:disabled { opacity: .4; }

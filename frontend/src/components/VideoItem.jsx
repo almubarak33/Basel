@@ -75,8 +75,28 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
     }
   };
 
+  const handleSave = async () => {
+    if (video.is_saved) {
+      const { data } = await api.delete(`/videos/${video.id}/unsave/`);
+      onUpdate({ ...video, is_saved: false, saves_count: data.saves_count });
+    } else {
+      const { data } = await api.post(`/videos/${video.id}/save/`);
+      onUpdate({ ...video, is_saved: true, saves_count: data.saves_count });
+    }
+  };
+
+  const handleRepost = async () => {
+    if (video.is_reposted) {
+      const { data } = await api.delete(`/videos/${video.id}/unrepost/`);
+      onUpdate({ ...video, is_reposted: false, reposts_count: data.reposts_count });
+    } else {
+      const { data } = await api.post(`/videos/${video.id}/repost/`);
+      onUpdate({ ...video, is_reposted: true, reposts_count: data.reposts_count });
+    }
+  };
+
   const handleDelete = async () => {
-    if (!window.confirm('Delete this video?')) return;
+    if (!window.confirm('حذف هذا الفيديو؟')) return;
     await api.delete(`/videos/${video.id}/`);
     onDelete(video.id);
   };
@@ -114,7 +134,12 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
   const avatarUrl = video.author.avatar ||
     `https://ui-avatars.com/api/?name=${video.author.username}&background=fe2c55&color=fff&size=48`;
 
-  const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n;
+  const fmt = (n) => {
+    if (n === undefined || n === null) return '0';
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return String(n);
+  };
 
   return (
     <div className={s.item}>
@@ -129,7 +154,6 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
         </div>
       )}
 
-      {/* Age badge (visible after confirm) */}
       {video.is_age_restricted && ageConfirmed && (
         <span className={s.ageBadge}>18+</span>
       )}
@@ -139,7 +163,11 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
         <div className={s.reportMenu}>
           <p style={{ color: '#888', fontSize: '.72rem', marginBottom: 2 }}>الإبلاغ عن المحتوى</p>
           {REPORT_REASONS.map((r) => (
-            <button key={r.key} className={s.reportOption + (r.key === 'nsfw' ? ` ${s.danger}` : '')} onClick={() => handleReport(r.key)}>
+            <button
+              key={r.key}
+              className={`${s.reportOption}${r.key === 'nsfw' ? ` ${s.danger}` : ''}`}
+              onClick={() => handleReport(r.key)}
+            >
               {r.label}
             </button>
           ))}
@@ -154,7 +182,6 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
         className={s.video}
         loop
         playsInline
-        muted={false}
         onClick={handleDoubleTap}
         onDoubleClick={isRestricted ? undefined : handleLike}
       />
@@ -168,7 +195,12 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
       {/* Bottom info */}
       <div className={s.info}>
         <div className={s.authorRow}>
-          <img src={avatarUrl} alt="" className={s.avatar} onClick={() => navigate(`/profile/${video.author.username}`)} />
+          <img
+            src={avatarUrl}
+            alt=""
+            className={s.avatar}
+            onClick={() => navigate(`/profile/${video.author.username}`)}
+          />
           <div>
             <span className={s.username} onClick={() => navigate(`/profile/${video.author.username}`)}>
               @{video.author.username}
@@ -179,19 +211,43 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
             <FollowBtn authorUsername={video.author.username} />
           )}
           {user?.username === video.author.username && (
-            <button className={s.deleteBtn} onClick={handleDelete}>Delete</button>
+            <button className={s.deleteBtn} onClick={handleDelete}>حذف</button>
           )}
         </div>
+
         {video.caption && (
           <p className={s.caption}>{renderCaption(video.caption)}</p>
         )}
+
+        {/* Music bar */}
+        {video.audio_file && (
+          <div className={s.musicBar}>
+            <span className={s.musicNote}>♪</span>
+            <span className={s.musicText}>موسيقى مضافة</span>
+          </div>
+        )}
+
         <div className={s.stats}>
           <span>👁 {fmt(video.views_count)}</span>
         </div>
       </div>
 
-      {/* Right actions */}
+      {/* Right actions — matching TikTok layout */}
       <div className={s.actions}>
+        {/* Avatar */}
+        <div className={s.avatarAction}>
+          <img
+            src={avatarUrl}
+            alt=""
+            className={s.actionAvatar}
+            onClick={() => navigate(`/profile/${video.author.username}`)}
+          />
+          {user?.username !== video.author.username && (
+            <FollowDot authorUsername={video.author.username} />
+          )}
+        </div>
+
+        {/* Like */}
         <ActionBtn
           icon={video.is_liked ? '❤️' : '🤍'}
           count={fmt(video.likes_count)}
@@ -199,37 +255,60 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
           onClick={handleLike}
           activeClass={s.liked}
         />
+
+        {/* Comment */}
         <ActionBtn
           icon="💬"
           count={fmt(video.comments_count)}
           onClick={() => setShowComments(true)}
         />
+
+        {/* Save / Bookmark */}
         <ActionBtn
-          icon="↗️"
-          count="Share"
+          icon={video.is_saved ? '🔖' : '🏷️'}
+          count={fmt(video.saves_count)}
+          active={video.is_saved}
+          onClick={handleSave}
+        />
+
+        {/* Share / Repost */}
+        <ActionBtn
+          icon={video.is_reposted ? '🔁' : '↗️'}
+          count={fmt(video.reposts_count)}
+          active={video.is_reposted}
           onClick={() => {
-            if (navigator.share) {
-              navigator.share({ title: video.caption, url: `${window.location.origin}/video/${video.id}` });
+            if (video.author?.username === user?.username) {
+              if (navigator.share) {
+                navigator.share({ title: video.caption, url: `${window.location.origin}/video/${video.id}` });
+              } else {
+                navigator.clipboard?.writeText(`${window.location.origin}/video/${video.id}`);
+              }
             } else {
-              navigator.clipboard?.writeText(`${window.location.origin}/video/${video.id}`);
+              handleRepost();
             }
           }}
         />
+
+        {/* Download */}
         <ActionBtn
           icon={downloading ? '⏳' : '⬇️'}
-          count="Save"
+          count="حفظ"
           onClick={handleDownload}
         />
+
+        {/* Report (other users' videos) */}
         {user?.username !== video.author.username && (
           <ActionBtn
             icon={reported ? '✅' : '🚩'}
-            count={reported ? 'Reported' : 'Report'}
+            count={reported ? 'أُبلغ' : 'بلاغ'}
             onClick={() => !reported && setShowReport((v) => !v)}
           />
         )}
+
+        {/* Next */}
         <button className={s.actionBtn} onClick={onNext}>
-          <span style={{ fontSize: '1.5rem' }}>⬇</span>
-          <span className={s.actionLabel}>Next</span>
+          <span style={{ fontSize: '1.4rem' }}>⬇</span>
+          <span className={s.actionLabel}>التالي</span>
         </button>
       </div>
 
@@ -268,7 +347,27 @@ function FollowBtn({ authorUsername }) {
   };
   return (
     <button className={`${s.followBtn} ${following ? s.following : ''}`} onClick={toggle}>
-      {following ? 'Following' : '+ Follow'}
+      {following ? 'يُتابَع' : '+ تابع'}
+    </button>
+  );
+}
+
+function FollowDot({ authorUsername }) {
+  const [following, setFollowing] = useState(false);
+  const toggle = async () => {
+    try {
+      if (following) {
+        await api.delete(`/users/${authorUsername}/unfollow/`);
+        setFollowing(false);
+      } else {
+        await api.post(`/users/${authorUsername}/follow/`);
+        setFollowing(true);
+      }
+    } catch { /* ignore */ }
+  };
+  return (
+    <button className={`${s.followDot} ${following ? s.followDotActive : ''}`} onClick={toggle}>
+      {following ? '✓' : '+'}
     </button>
   );
 }

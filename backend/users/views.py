@@ -4,10 +4,24 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from .models import Follow, Block
-from .serializers import RegisterSerializer, UserSerializer
+from .models import Follow, Block, FriendRequest
+from .serializers import RegisterSerializer, UserSerializer, UserMiniSerializer
 
 User = get_user_model()
+
+
+def _notify(recipient, sender, ntype, text='', video=None):
+    """Helper to create a notification without circular imports."""
+    if recipient == sender:
+        return
+    try:
+        from notifications.models import Notification
+        Notification.objects.create(
+            recipient=recipient, sender=sender,
+            type=ntype, text=text, video=video,
+        )
+    except Exception:
+        pass
 
 
 class RegisterView(generics.CreateAPIView):
@@ -47,8 +61,10 @@ class UserProfileView(generics.RetrieveAPIView):
 def follow_user(request, username):
     target = get_object_or_404(User, username=username)
     if target == request.user:
-        return Response({'detail': 'Cannot follow yourself.'}, status=status.HTTP_400_BAD_REQUEST)
-    Follow.objects.get_or_create(follower=request.user, following=target)
+        return Response({'detail': 'Cannot follow yourself.'}, status=400)
+    _, created = Follow.objects.get_or_create(follower=request.user, following=target)
+    if created:
+        _notify(target, request.user, 'follow', f'@{request.user.username} started following you.')
     return Response({'detail': f'Now following {username}.'})
 
 
@@ -65,7 +81,7 @@ def unfollow_user(request, username):
 def followers_list(request, username):
     user = get_object_or_404(User, username=username)
     followers = User.objects.filter(following__following=user)
-    serializer = UserSerializer(followers, many=True, context={'request': request})
+    serializer = UserMiniSerializer(followers, many=True)
     return Response(serializer.data)
 
 
@@ -74,8 +90,69 @@ def followers_list(request, username):
 def following_list(request, username):
     user = get_object_or_404(User, username=username)
     following = User.objects.filter(followers__follower=user)
-    serializer = UserSerializer(following, many=True, context={'request': request})
+    serializer = UserMiniSerializer(following, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def friends_list(request, username):
+    user = get_object_or_404(User, username=username)
+    friends = user.get_friends()
+    serializer = UserMiniSerializer(friends, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def send_friend_request(request, username):
+    receiver = get_object_or_404(User, username=username)
+    if receiver == request.user:
+        return Response({'detail': 'Cannot send request to yourself.'}, status=400)
+    req, created = FriendRequest.objects.get_or_create(
+        sender=request.user, receiver=receiver,
+        defaults={'status': 'pending'}
+    )
+    if created:
+        _notify(receiver, request.user, 'friend_request',
+                f'@{request.user.username} sent you a friend request.')
+    return Response({'status': req.status, 'created': created})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def respond_friend_request(request, pk):
+    """Accept or reject a received friend request."""
+    req = get_object_or_404(FriendRequest, pk=pk, receiver=request.user, status='pending')
+    action = request.data.get('action')
+    if action == 'accept':
+        req.status = 'accepted'
+        req.save()
+        # Mutual follow to make them friends
+        Follow.objects.get_or_create(follower=request.user, following=req.sender)
+        Follow.objects.get_or_create(follower=req.sender, following=request.user)
+        _notify(req.sender, request.user, 'friend_accept',
+                f'@{request.user.username} accepted your friend request.')
+    elif action == 'reject':
+        req.status = 'rejected'
+        req.save()
+    return Response({'status': req.status})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def pending_friend_requests(request):
+    """Received friend requests still pending."""
+    reqs = FriendRequest.objects.filter(receiver=request.user, status='pending').select_related('sender')
+    data = [
+        {
+            'id': r.pk,
+            'sender': UserMiniSerializer(r.sender).data,
+            'created_at': r.created_at,
+        }
+        for r in reqs
+    ]
+    return Response(data)
 
 
 @api_view(['POST'])
@@ -83,7 +160,7 @@ def following_list(request, username):
 def block_user(request, username):
     target = get_object_or_404(User, username=username)
     if target == request.user:
-        return Response({'detail': 'Cannot block yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Cannot block yourself.'}, status=400)
     Block.objects.get_or_create(blocker=request.user, blocked=target)
     Follow.objects.filter(follower=request.user, following=target).delete()
     Follow.objects.filter(follower=target, following=request.user).delete()

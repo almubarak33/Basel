@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
 
   const isMe = me?.username === target;
 
@@ -43,8 +44,21 @@ export default function ProfilePage() {
     } finally { setActionLoading(false); }
   };
 
+  const sendFriendRequest = async () => {
+    setActionLoading(true);
+    try {
+      await api.post(`/users/${target}/friend-request/`);
+      setProfile((p) => ({ ...p, friend_request_status: 'pending' }));
+    } finally { setActionLoading(false); }
+  };
+
+  const startChat = async () => {
+    const { data } = await api.post(`/messages/with/${target}/`);
+    navigate(`/messages/${data.conversation_id}`);
+  };
+
   const toggleBlock = async () => {
-    if (!window.confirm(profile.is_blocked ? `Unblock @${target}?` : `Block @${target}?`)) return;
+    if (!window.confirm(profile.is_blocked ? `إلغاء حظر @${target}؟` : `حظر @${target}؟`)) return;
     setActionLoading(true);
     try {
       if (profile.is_blocked) {
@@ -58,45 +72,79 @@ export default function ProfilePage() {
     } finally { setActionLoading(false); }
   };
 
+  const togglePrivacy = async () => {
+    const newVal = !profile.is_private;
+    await api.patch('/auth/me/', { is_private: newVal });
+    setProfile((p) => ({ ...p, is_private: newVal }));
+    setShowPrivacyMenu(false);
+  };
+
   const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n ?? 0;
 
   if (loading) return <div className={s.loading}><div className={s.spinner} /></div>;
-  if (!profile) return <div className={s.loading}>User not found.</div>;
+  if (!profile) return <div className={s.loading}>المستخدم غير موجود.</div>;
 
   const avatarUrl = profile.avatar ||
     `https://ui-avatars.com/api/?name=${profile.username}&background=fe2c55&color=fff&size=128`;
+
+  const isPrivateLocked = profile.is_private && !isMe && !profile.is_friend && !profile.is_following;
 
   return (
     <div className={s.page}>
       <div className={s.header}>
         <button className={s.back} onClick={() => navigate(-1)}>←</button>
-        <span className={s.headerName}>@{profile.username}</span>
-        <div style={{ width: 32 }} />
+        <span className={s.headerName}>
+          @{profile.username}
+          {profile.is_private && <span className={s.privateBadge}> 🔒</span>}
+        </span>
+        {isMe && (
+          <button className={s.settingsBtn} onClick={() => setShowPrivacyMenu((v) => !v)}>⚙️</button>
+        )}
+        {!isMe && <div style={{ width: 32 }} />}
       </div>
+
+      {/* Privacy menu */}
+      {showPrivacyMenu && isMe && (
+        <div className={s.privacyMenu}>
+          <button className={s.privacyItem} onClick={togglePrivacy}>
+            {profile.is_private ? '🔓 جعل الحساب عاماً' : '🔒 جعل الحساب خاصاً'}
+          </button>
+          <button className={s.privacyItem} onClick={() => setShowPrivacyMenu(false)}>إلغاء</button>
+        </div>
+      )}
 
       <div className={s.body}>
         <div className={s.topSection}>
           <img src={avatarUrl} alt="" className={s.avatar} />
           <div className={s.stats}>
-            <div className={s.stat}><strong>{fmt(profile.following_count)}</strong><span>Following</span></div>
-            <div className={s.stat}><strong>{fmt(profile.followers_count)}</strong><span>Followers</span></div>
-            <div className={s.stat}><strong>{fmt(profile.likes_count)}</strong><span>Likes</span></div>
+            <div className={s.stat}><strong>{fmt(profile.following_count)}</strong><span>يتابع</span></div>
+            <div className={s.stat}><strong>{fmt(profile.followers_count)}</strong><span>متابع</span></div>
+            <div className={s.stat}><strong>{fmt(profile.likes_count)}</strong><span>إعجاب</span></div>
           </div>
         </div>
 
         <p className={s.displayName}>{profile.first_name || profile.username}</p>
         <p className={s.handle}>@{profile.username}</p>
         {profile.bio && <p className={s.bio}>{profile.bio}</p>}
+        {profile.is_private && <p className={s.privateNote}>🔒 حساب خاص</p>}
 
         {profile.is_live && (
           <Link to={`/live/${profile.username}`} className={s.liveNow}>
-            🔴 LIVE NOW — {profile.live_title}
+            🔴 بث مباشر الآن — {profile.live_title}
           </Link>
         )}
 
         <div className={s.btnRow}>
           {isMe ? (
-            <button className={s.editBtn}>Edit Profile</button>
+            <>
+              <button className={s.editBtn} onClick={() => navigate('/settings')}>تعديل الملف</button>
+              <button
+                className={s.privacyToggleBtn}
+                onClick={togglePrivacy}
+              >
+                {profile.is_private ? '🔒 خاص' : '🌐 عام'}
+              </button>
+            </>
           ) : (
             <>
               <button
@@ -104,35 +152,59 @@ export default function ProfilePage() {
                 onClick={toggleFollow}
                 disabled={actionLoading}
               >
-                {profile.is_following ? 'Following' : 'Follow'}
+                {profile.is_following ? 'يُتابَع' : 'متابعة'}
               </button>
+              {profile.is_friend ? (
+                <button className={s.msgBtn} onClick={startChat}>💬 رسالة</button>
+              ) : (
+                <button
+                  className={s.friendBtn}
+                  onClick={sendFriendRequest}
+                  disabled={actionLoading || profile.friend_request_status === 'pending'}
+                >
+                  {profile.friend_request_status === 'pending' ? '⏳ بانتظار' : '🤝 صديق'}
+                </button>
+              )}
               <button className={s.blockBtn} onClick={toggleBlock} disabled={actionLoading}>
-                {profile.is_blocked ? 'Unblock' : '🚫'}
+                {profile.is_blocked ? '🔓' : '🚫'}
               </button>
             </>
           )}
         </div>
 
         {/* Videos grid */}
-        <div className={s.grid}>
-          {profile.is_blocked ? (
-            <p className={s.blocked}>You blocked this user.</p>
-          ) : videos.length === 0 ? (
-            <p className={s.noVideos}>No videos yet.</p>
-          ) : (
-            videos.map((v) => (
-              <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
-                {v.thumbnail
-                  ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
-                  : <video src={v.video_file} className={s.thumbImg} muted />
-                }
-                <div className={s.thumbOverlay}>
-                  <span>▶ {fmt(v.views_count)}</span>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
+        {isPrivateLocked ? (
+          <div className={s.privateLocked}>
+            <p style={{ fontSize: '2rem' }}>🔒</p>
+            <p>هذا الحساب خاص</p>
+            <p style={{ fontSize: '.82rem', color: '#555' }}>تابع هذا الشخص لترى محتواه</p>
+          </div>
+        ) : (
+          <div className={s.grid}>
+            {profile.is_blocked ? (
+              <p className={s.blocked}>لقد حظرت هذا المستخدم.</p>
+            ) : videos.length === 0 ? (
+              <p className={s.noVideos}>لا توجد فيديوهات بعد.</p>
+            ) : (
+              videos.map((v) => (
+                <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
+                  {v.thumbnail
+                    ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
+                    : <video src={v.video_file} className={s.thumbImg} muted />
+                  }
+                  <div className={s.thumbOverlay}>
+                    <span>▶ {fmt(v.views_count)}</span>
+                    {v.visibility !== 'public' && (
+                      <span className={s.visibilityBadge}>
+                        {v.visibility === 'friends' ? '👥' : v.visibility === 'private' ? '🔒' : '📦'}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

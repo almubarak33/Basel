@@ -11,6 +11,7 @@ export default function UploadPage() {
   const [audio, setAudio] = useState(null);
   const [caption, setCaption] = useState('');
   const [ageRestricted, setAgeRestricted] = useState(false);
+  const [visibility, setVisibility] = useState('public');
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileRef = useRef();
@@ -34,6 +35,7 @@ export default function UploadPage() {
       fd.append('video_file', video);
       fd.append('caption', caption);
       fd.append('is_age_restricted', ageRestricted);
+      fd.append('visibility', visibility);
       if (thumb) fd.append('thumbnail', thumb);
       if (audio) fd.append('audio_file', audio);
       await api.post('/videos/upload/', fd, {
@@ -96,6 +98,22 @@ export default function UploadPage() {
             ? <p className={s.audioName}>🎵 {audio.name}</p>
             : <p className={s.audioNote}>MP3, AAC, WAV — سيتم دمجه مع الفيديو</p>
           }
+
+          {/* Visibility */}
+          <div className={s.ageRow}>
+            <label htmlFor="vis">👁 من يرى الفيديو؟</label>
+            <select
+              id="vis"
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+              style={{ background: '#1a1a1a', color: '#fff', border: '1px solid #222', borderRadius: 6, padding: '4px 8px', fontSize: '.85rem' }}
+            >
+              <option value="public">🌐 الكل</option>
+              <option value="friends">👥 الأصدقاء فقط</option>
+              <option value="private">🔒 أنا فقط</option>
+              <option value="archive">📦 أرشيف</option>
+            </select>
+          </div>
 
           {/* Age restriction */}
           <div className={s.ageRow}>

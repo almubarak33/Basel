@@ -12,8 +12,22 @@ from django.http import FileResponse, Http404
 from .models import (
     Video, VideoLike, VideoComment, Hashtag,
     WatchedVideo, UserInterest, VideoReport,
+    SavedVideo, Repost,
 )
 from .serializers import VideoSerializer, VideoCommentSerializer, HashtagSerializer
+
+
+def _notify(recipient, sender, ntype, text='', video=None):
+    if recipient == sender:
+        return
+    try:
+        from notifications.models import Notification
+        Notification.objects.create(
+            recipient=recipient, sender=sender,
+            type=ntype, text=text, video=video,
+        )
+    except Exception:
+        pass
 
 User = get_user_model()
 
@@ -44,6 +58,17 @@ class ForYouFeedView(generics.ListAPIView):
         watched_ids = set(user.watched.values_list('video_id', flat=True))
         following_ids = set(user.following.values_list('following_id', flat=True))
 
+        friend_ids = set(user.get_friends().values_list('pk', flat=True))
+
+        def public_or_friends(qs, author_ids=None):
+            """Filter videos by visibility rules."""
+            from django.db.models import Q
+            q = Q(visibility='public')
+            if friend_ids:
+                q |= Q(visibility='friends', author_id__in=friend_ids)
+            q |= Q(author=user)  # own videos always visible
+            return qs.filter(q)
+
         # Tier 1: videos whose hashtags match user's top interests (personalized)
         top_tags = list(
             user.interests.order_by('-score').values_list('hashtag_id', flat=True)[:10]
@@ -51,25 +76,28 @@ class ForYouFeedView(generics.ListAPIView):
         interest_vids = []
         if top_tags:
             interest_vids = list(
-                Video.objects.filter(hashtags__in=top_tags)
-                .exclude(author_id__in=blocked)
-                .exclude(id__in=watched_ids)
-                .exclude(author=user)
-                .distinct()
-                .order_by('-created_at')[:20]
+                public_or_friends(
+                    Video.objects.filter(hashtags__in=top_tags)
+                    .exclude(author_id__in=blocked)
+                    .exclude(id__in=watched_ids)
+                    .exclude(author=user)
+                    .distinct()
+                ).order_by('-created_at')[:20]
             )
 
         # Tier 2: videos from followed users (unseen)
         following_vids = list(
-            Video.objects.filter(author_id__in=following_ids)
-            .exclude(author_id__in=blocked)
-            .exclude(id__in=watched_ids)
-            .order_by('-created_at')[:20]
+            public_or_friends(
+                Video.objects.filter(author_id__in=following_ids)
+                .exclude(author_id__in=blocked)
+                .exclude(id__in=watched_ids)
+            ).order_by('-created_at')[:20]
         )
 
-        # Tier 3: trending (most liked, unseen)
+        # Tier 3: trending (most liked, unseen, public only)
         trending = list(
-            Video.objects.annotate(like_count=Count('likes'))
+            Video.objects.filter(visibility='public')
+            .annotate(like_count=Count('likes'))
             .exclude(author_id__in=blocked)
             .exclude(id__in=watched_ids)
             .exclude(author=user)
@@ -84,10 +112,11 @@ class ForYouFeedView(generics.ListAPIView):
                 seen.add(v.id)
                 merged.append(v)
 
-        # Tier 4: random fallback
+        # Tier 4: random fallback (public videos)
         if len(merged) < 5:
             extras = list(
-                Video.objects.exclude(author_id__in=blocked)
+                Video.objects.filter(visibility='public')
+                .exclude(author_id__in=blocked)
                 .exclude(id__in=watched_ids)
                 .order_by('?')[:20]
             )
@@ -184,8 +213,30 @@ class UserVideosView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = get_object_or_404(User, username=self.kwargs['username'])
-        return Video.objects.filter(author=user)
+        target = get_object_or_404(User, username=self.kwargs['username'])
+        me = self.request.user
+        if me == target:
+            # Own profile: show everything except archive
+            return Video.objects.filter(author=target).exclude(visibility='archive')
+        # Is friend?
+        is_friend = (
+            target.followers.filter(follower=me).exists() and
+            target.following.filter(following=me).exists()
+        )
+        from django.db.models import Q
+        q = Q(visibility='public')
+        if is_friend:
+            q |= Q(visibility='friends')
+        return Video.objects.filter(author=target).filter(q)
+
+
+class SavedVideosView(generics.ListAPIView):
+    serializer_class = VideoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        saved_ids = self.request.user.saved_videos.values_list('video_id', flat=True)
+        return Video.objects.filter(pk__in=saved_ids)
 
 
 class HashtagVideosView(generics.ListAPIView):
@@ -235,14 +286,19 @@ class VideoCommentListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         video = get_object_or_404(Video, pk=self.kwargs['pk'])
-        serializer.save(author=self.request.user, video=video)
+        comment = serializer.save(author=self.request.user, video=video)
+        _notify(video.author, self.request.user, 'comment',
+                f'@{self.request.user.username} commented on your video.', video=video)
 
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def like_video(request, pk):
     video = get_object_or_404(Video, pk=pk)
-    VideoLike.objects.get_or_create(user=request.user, video=video)
+    _, created = VideoLike.objects.get_or_create(user=request.user, video=video)
+    if created:
+        _notify(video.author, request.user, 'like',
+                f'@{request.user.username} liked your video.', video=video)
     return Response({'likes_count': video.likes.count(), 'is_liked': True})
 
 
@@ -252,6 +308,43 @@ def unlike_video(request, pk):
     video = get_object_or_404(Video, pk=pk)
     VideoLike.objects.filter(user=request.user, video=video).delete()
     return Response({'likes_count': video.likes.count(), 'is_liked': False})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def save_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    SavedVideo.objects.get_or_create(user=request.user, video=video)
+    return Response({'saved': True, 'saves_count': video.saved_by.count()})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unsave_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    SavedVideo.objects.filter(user=request.user, video=video).delete()
+    return Response({'saved': False, 'saves_count': video.saved_by.count()})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def repost_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    if video.author == request.user:
+        return Response({'detail': 'Cannot repost your own video.'}, status=400)
+    _, created = Repost.objects.get_or_create(user=request.user, video=video)
+    if created:
+        _notify(video.author, request.user, 'repost',
+                f'@{request.user.username} reposted your video.', video=video)
+    return Response({'reposted': True, 'reposts_count': video.reposts.count()})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unrepost_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    Repost.objects.filter(user=request.user, video=video).delete()
+    return Response({'reposted': False, 'reposts_count': video.reposts.count()})
 
 
 @api_view(['POST'])

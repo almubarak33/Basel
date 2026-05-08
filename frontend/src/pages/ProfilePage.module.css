@@ -92,3 +92,46 @@
 }
 
 .noVideos, .blocked { color: #555; text-align: center; padding: 40px; grid-column: span 3; font-size: .9rem; }
+
+.privateBadge { font-size: .7rem; }
+.settingsBtn { color: #fff; font-size: 1.2rem; padding: 4px; }
+
+.privacyMenu {
+  position: absolute; top: 50px; right: 14px;
+  background: #111; border: 1px solid #222;
+  border-radius: 12px; padding: 8px;
+  z-index: 50; min-width: 180px;
+}
+.privacyItem {
+  width: 100%; padding: 10px 14px; text-align: right;
+  font-size: .88rem; color: #ddd; border-radius: 8px;
+  transition: background .15s;
+}
+.privacyItem:hover { background: #1a1a1a; }
+
+.privateNote { font-size: .8rem; color: #888; margin-bottom: 8px; }
+
+.msgBtn {
+  flex: 1; padding: 10px; background: transparent;
+  border: 1px solid #25f4ee; color: #25f4ee;
+  border-radius: 6px; font-size: .88rem; font-weight: 700;
+}
+.friendBtn {
+  flex: 1; padding: 10px; background: transparent;
+  border: 1px solid #fe2c55; color: #fe2c55;
+  border-radius: 6px; font-size: .88rem; font-weight: 700;
+}
+.friendBtn:disabled { opacity: .5; }
+.privacyToggleBtn {
+  padding: 10px 14px; background: transparent;
+  border: 1px solid #333; color: #888;
+  border-radius: 6px; font-size: .88rem; font-weight: 600;
+}
+
+.privateLocked {
+  text-align: center; padding: 60px 20px;
+  color: #ddd; display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+}
+
+.visibilityBadge { margin-left: 4px; font-size: .75rem; }

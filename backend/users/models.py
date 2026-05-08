@@ -9,9 +9,16 @@ class User(AbstractUser):
     live_title = models.CharField(max_length=100, blank=True)
     website = models.URLField(blank=True)
     location = models.CharField(max_length=100, blank=True)
+    is_private = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username
+
+    def get_friends(self):
+        """Mutual follows = friends."""
+        following_ids = set(self.following.values_list('following_id', flat=True))
+        followers_ids = set(self.followers.values_list('follower_id', flat=True))
+        return User.objects.filter(pk__in=following_ids & followers_ids)
 
 
 class Follow(models.Model):
@@ -30,3 +37,18 @@ class Block(models.Model):
 
     class Meta:
         unique_together = ('blocker', 'blocked')
+
+
+class FriendRequest(models.Model):
+    STATUS = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+    ]
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_friend_requests')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_friend_requests')
+    status = models.CharField(max_length=10, choices=STATUS, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('sender', 'receiver')

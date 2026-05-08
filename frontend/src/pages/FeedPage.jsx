@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import VideoItem from '../components/VideoItem';
 import s from './FeedPage.module.css';
 
+const TABS = [
+  { key: 'foryou', label: 'لك' },
+  { key: 'following', label: 'أتابعه' },
+  { key: 'saved', label: '🔖 المحفوظ' },
+];
+
 export default function FeedPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState('foryou');
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,12 +19,17 @@ export default function FeedPage() {
   const containerRef = useRef(null);
   const touchStartY = useRef(null);
 
+  const ENDPOINT = {
+    foryou: '/videos/foryou/',
+    following: '/videos/following/',
+    saved: '/videos/saved/',
+  };
+
   const fetchVideos = useCallback(async (t) => {
     setLoading(true);
     setCurrentIndex(0);
     try {
-      const endpoint = t === 'foryou' ? '/videos/foryou/' : '/videos/following/';
-      const { data } = await api.get(endpoint);
+      const { data } = await api.get(ENDPOINT[t]);
       setVideos(data.results || data);
     } catch { setVideos([]); } finally { setLoading(false); }
   }, []);
@@ -58,20 +71,40 @@ export default function FeedPage() {
 
   return (
     <div className={s.page}>
-      {/* Tabs */}
-      <div className={s.tabs}>
-        <button className={`${s.tab} ${tab === 'foryou' ? s.active : ''}`} onClick={() => setTab('foryou')}>For You</button>
-        <button className={`${s.tab} ${tab === 'following' ? s.active : ''}`} onClick={() => setTab('following')}>Following</button>
+      {/* Top bar */}
+      <div className={s.topBar}>
+        <div className={s.topLeft}>
+          <button className={s.iconBtn} onClick={() => navigate('/search')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" width="22" height="22">
+              <circle cx="11" cy="11" r="7"/>
+              <line x1="20" y1="20" x2="15.5" y2="15.5"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className={s.tabs}>
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              className={`${s.tab} ${tab === t.key ? s.active : ''}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className={s.topRight}>
+          <button className={s.livePill} onClick={() => navigate('/inbox')}>LIVE</button>
+        </div>
       </div>
 
-      {/* Feed */}
       {loading ? (
-        <div className={s.loading}>
-          <div className={s.spinner} />
-        </div>
+        <div className={s.loading}><div className={s.spinner} /></div>
       ) : videos.length === 0 ? (
         <div className={s.empty}>
-          {tab === 'following' ? 'Follow creators to see their videos here!' : 'No videos yet. Be the first!'}
+          {tab === 'following' ? 'تابع أشخاصاً لترى فيديوهاتهم هنا!' :
+           tab === 'saved' ? 'لم تحفظ أي فيديو بعد.' : 'لا توجد فيديوهات بعد!'}
         </div>
       ) : (
         <div

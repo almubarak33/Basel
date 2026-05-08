@@ -9,4 +9,6 @@ urlpatterns = [
     path('api/users/', include('users.profile_urls')),
     path('api/videos/', include('videos.urls')),
     path('api/live/', include('livestreams.urls')),
+    path('api/messages/', include('chats.urls')),
+    path('api/notifications/', include('notifications.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

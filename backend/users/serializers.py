@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Follow, Block
+from .models import Follow, Block, FriendRequest
 
 User = get_user_model()
 
@@ -28,16 +28,20 @@ class UserSerializer(serializers.ModelSerializer):
     following_count = serializers.SerializerMethodField()
     videos_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    friends_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     is_blocked = serializers.SerializerMethodField()
+    is_friend = serializers.SerializerMethodField()
+    friend_request_status = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
             'id', 'username', 'email', 'bio', 'avatar', 'website',
-            'location', 'is_live', 'live_title', 'date_joined',
-            'followers_count', 'following_count', 'videos_count',
-            'likes_count', 'is_following', 'is_blocked',
+            'location', 'is_live', 'live_title', 'is_private', 'date_joined',
+            'followers_count', 'following_count', 'videos_count', 'likes_count',
+            'friends_count', 'is_following', 'is_blocked', 'is_friend',
+            'friend_request_status',
         )
         read_only_fields = ('id', 'date_joined', 'is_live', 'live_title')
 
@@ -53,6 +57,9 @@ class UserSerializer(serializers.ModelSerializer):
     def get_likes_count(self, obj):
         return sum(v.likes.count() for v in obj.videos.all())
 
+    def get_friends_count(self, obj):
+        return obj.get_friends().count()
+
     def get_is_following(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -65,8 +72,27 @@ class UserSerializer(serializers.ModelSerializer):
             return Block.objects.filter(blocker=request.user, blocked=obj).exists()
         return False
 
+    def get_is_friend(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and request.user != obj:
+            u = request.user
+            follows_obj = Follow.objects.filter(follower=u, following=obj).exists()
+            obj_follows_u = Follow.objects.filter(follower=obj, following=u).exists()
+            return follows_obj and obj_follows_u
+        return False
+
+    def get_friend_request_status(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and request.user != obj:
+            req = FriendRequest.objects.filter(
+                sender=request.user, receiver=obj
+            ).first()
+            if req:
+                return req.status
+        return None
+
 
 class UserMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'avatar', 'is_live')
+        fields = ('id', 'username', 'avatar', 'is_live', 'is_private')

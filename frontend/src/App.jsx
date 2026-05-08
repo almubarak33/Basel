@@ -6,10 +6,12 @@ import FeedPage from './pages/FeedPage';
 import SearchPage from './pages/SearchPage';
 import UploadPage from './pages/UploadPage';
 import InboxPage from './pages/InboxPage';
+import FriendsPage from './pages/FriendsPage';
 import ProfilePage from './pages/ProfilePage';
 import VideoPage from './pages/VideoPage';
 import HashtagPage from './pages/HashtagPage';
 import LivePage from './pages/LivePage';
+import ConversationPage from './pages/ConversationPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
@@ -45,6 +47,8 @@ export default function App() {
           <Route path="/search" element={<PrivateRoute><AppLayout><SearchPage /></AppLayout></PrivateRoute>} />
           <Route path="/upload" element={<PrivateRoute><AppLayout hideNav><UploadPage /></AppLayout></PrivateRoute>} />
           <Route path="/inbox" element={<PrivateRoute><AppLayout><InboxPage /></AppLayout></PrivateRoute>} />
+          <Route path="/friends" element={<PrivateRoute><AppLayout><FriendsPage /></AppLayout></PrivateRoute>} />
+          <Route path="/messages/:id" element={<PrivateRoute><AppLayout hideNav><ConversationPage /></AppLayout></PrivateRoute>} />
           <Route path="/profile/:username" element={<PrivateRoute><AppLayout hideNav><ProfilePage /></AppLayout></PrivateRoute>} />
           <Route path="/me" element={<PrivateRoute><AppLayout><ProfilePage /></AppLayout></PrivateRoute>} />
           <Route path="/video/:id" element={<PrivateRoute><AppLayout hideNav><VideoPage /></AppLayout></PrivateRoute>} />

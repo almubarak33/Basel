@@ -20,6 +20,13 @@ class Hashtag(models.Model):
 
 
 class Video(models.Model):
+    VISIBILITY = [
+        ('public', 'Public'),
+        ('friends', 'Friends'),
+        ('private', 'Private'),
+        ('archive', 'Archive'),
+    ]
+
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='videos')
     video_file = models.FileField(upload_to='videos/')
     thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
@@ -27,6 +34,7 @@ class Video(models.Model):
     caption = models.TextField(max_length=300, blank=True)
     hashtags = models.ManyToManyField(Hashtag, blank=True, related_name='videos')
     views_count = models.PositiveIntegerField(default=0)
+    visibility = models.CharField(max_length=10, choices=VISIBILITY, default='public')
     is_age_restricted = models.BooleanField(default=False)
     is_flagged = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -96,6 +104,26 @@ class UserInterest(models.Model):
     class Meta:
         unique_together = ('user', 'hashtag')
         ordering = ['-score']
+
+
+class SavedVideo(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_videos')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='saved_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'video')
+        ordering = ['-created_at']
+
+
+class Repost(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reposts')
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='reposts')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'video')
+        ordering = ['-created_at']
 
 
 class VideoReport(models.Model):
