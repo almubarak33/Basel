@@ -48,6 +48,46 @@ class MeView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def perform_update(self, serializer):
+        # If user is changing their username, mark it as user-set
+        instance = serializer.save()
+        if 'username' in serializer.validated_data and not instance.username_is_set:
+            User.objects.filter(pk=instance.pk).update(username_is_set=True)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def check_username(request):
+    username = request.query_params.get('username', '').strip()
+    if not username:
+        return Response({'available': False, 'error': 'اسم المستخدم مطلوب.'})
+    if len(username) < 3:
+        return Response({'available': False, 'error': 'يجب أن يكون 3 أحرف على الأقل.'})
+    if len(username) > 30:
+        return Response({'available': False, 'error': 'الحد الأقصى 30 حرفاً.'})
+    import re
+    if not re.match(r'^[a-zA-Z0-9_.]+$', username):
+        return Response({'available': False, 'error': 'أحرف إنجليزية وأرقام و _ و . فقط.'})
+    taken = User.objects.filter(username__iexact=username).exists()
+    return Response({'available': not taken, 'error': 'هذا الاسم مأخوذ.' if taken else None})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def set_username(request):
+    """First-time username setup — marks username_is_set=True."""
+    username = request.data.get('username', '').strip()
+    if not username:
+        return Response({'error': 'اسم المستخدم مطلوب.'}, status=400)
+    import re
+    if not re.match(r'^[a-zA-Z0-9_.]{3,30}$', username):
+        return Response({'error': 'اسم غير صالح.'}, status=400)
+    if User.objects.filter(username__iexact=username).exclude(pk=request.user.pk).exists():
+        return Response({'error': 'هذا الاسم مأخوذ.'}, status=400)
+    User.objects.filter(pk=request.user.pk).update(username=username, username_is_set=True)
+    request.user.refresh_from_db()
+    return Response(UserSerializer(request.user, context={'request': request}).data)
+
 
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer

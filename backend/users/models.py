@@ -10,6 +10,7 @@ class User(AbstractUser):
     website = models.URLField(blank=True)
     location = models.CharField(max_length=100, blank=True)
     is_private = models.BooleanField(default=False)
+    username_is_set = models.BooleanField(default=True)  # False = auto-generated, needs setup
 
     def __str__(self):
         return self.username

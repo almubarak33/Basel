@@ -1,0 +1,164 @@
+.page {
+  min-height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  font-size: 2.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fe2c55, #25f4ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.sub {
+  color: #888;
+  font-size: .88rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  background: #111;
+  border: 1.5px solid #222;
+  border-radius: 12px;
+  padding: 0 12px;
+  transition: border-color .2s;
+}
+
+.inputWrap:focus-within { border-color: #fe2c55; }
+
+.at {
+  color: #555;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 8px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  letter-spacing: .02em;
+}
+
+.input::placeholder { color: #333; font-weight: 400; }
+.inputOk { color: #25f4ee; }
+.inputNo { color: #fe2c55; }
+
+.statusIcon {
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+}
+
+.iconChecking { color: #888; animation: spin .6s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.iconOk { color: #25f4ee; }
+.iconNo { color: #fe2c55; }
+
+.error {
+  color: #fe2c55;
+  font-size: .82rem;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.hint {
+  color: #25f4ee;
+  font-size: .82rem;
+  text-align: center;
+}
+
+.rules {
+  color: #444;
+  font-size: .75rem;
+  text-align: center;
+}
+
+.btn {
+  padding: 14px;
+  background: #fe2c55;
+  color: white;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: all .2s;
+}
+.btn:hover:not(:disabled) { background: #e6254d; transform: scale(1.02); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.skip {
+  color: #555;
+  font-size: .82rem;
+  text-align: center;
+  padding: 6px;
+  transition: color .2s;
+}
+.skip:hover { color: #888; }
+
+.suggestions {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #111;
+}
+
+.sugLabel {
+  font-size: .75rem;
+  color: #555;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.sugList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.sugBtn {
+  background: #111;
+  border: 1px solid #222;
+  color: #888;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: .8rem;
+  transition: all .2s;
+}
+.sugBtn:hover { border-color: #fe2c55; color: #fff; }

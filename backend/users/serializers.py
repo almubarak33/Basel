@@ -11,16 +11,30 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2')
+        fields = ('email', 'password', 'password2')
 
     def validate(self, data):
         if data['password'] != data['password2']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
+            raise serializers.ValidationError({'password': 'كلمتا المرور غير متطابقتين.'})
+        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({'email': 'هذا الإيميل مستخدم بالفعل.'})
         return data
 
     def create(self, validated_data):
+        import random, string
         validated_data.pop('password2')
-        return User.objects.create_user(**validated_data)
+        # Auto-generate unique username
+        while True:
+            suffix = ''.join(random.choices(string.digits, k=8))
+            username = f'user_{suffix}'
+            if not User.objects.filter(username=username).exists():
+                break
+        return User.objects.create_user(
+            username=username,
+            email=validated_data['email'],
+            password=validated_data['password'],
+            username_is_set=False,
+        )
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -38,7 +52,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'bio', 'avatar', 'website',
-            'location', 'is_live', 'live_title', 'is_private', 'date_joined',
+            'location', 'is_live', 'live_title', 'is_private', 'username_is_set', 'date_joined',
             'followers_count', 'following_count', 'videos_count', 'likes_count',
             'friends_count', 'is_following', 'is_blocked', 'is_friend',
             'friend_request_status',

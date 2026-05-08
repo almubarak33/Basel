@@ -14,11 +14,17 @@ import LivePage from './pages/LivePage';
 import ConversationPage from './pages/ConversationPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ChooseUsernamePage from './pages/ChooseUsernamePage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen">Loading…</div>;
-  return user ? children : <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" />;
+  // Redirect new users to choose their username
+  if (!user.username_is_set && window.location.pathname !== '/choose-username') {
+    return <Navigate to="/choose-username" />;
+  }
+  return children;
 }
 
 function PublicRoute({ children }) {
@@ -54,6 +60,7 @@ export default function App() {
           <Route path="/video/:id" element={<PrivateRoute><AppLayout hideNav><VideoPage /></AppLayout></PrivateRoute>} />
           <Route path="/hashtag/:tag" element={<PrivateRoute><AppLayout hideNav><HashtagPage /></AppLayout></PrivateRoute>} />
           <Route path="/live/:id" element={<PrivateRoute><AppLayout hideNav><LivePage /></AppLayout></PrivateRoute>} />
+          <Route path="/choose-username" element={<PrivateRoute><ChooseUsernamePage /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
