@@ -16,7 +16,7 @@ from django.http import FileResponse, Http404
 from .models import (
     Video, VideoLike, VideoComment, Hashtag,
     WatchedVideo, UserInterest, VideoReport,
-    SavedVideo, Repost, PhotoSlide,
+    SavedVideo, Repost, PhotoSlide, HashtagSubscription,
 )
 from .serializers import VideoSerializer, VideoCommentSerializer, HashtagSerializer
 
@@ -594,3 +594,185 @@ def download_video(request, pk):
     )
     response['X-Accel-Buffering'] = 'no'
     return response
+
+
+# ─── Explore ──────────────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def explore_feed(request):
+    """Trending videos (last 7 days) + suggested users."""
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.db.models import Count
+
+    blocked = get_blocked_ids(request.user)
+    cutoff = timezone.now() - timedelta(days=7)
+
+    # Trending: most-liked public videos in last 7 days
+    trending = (
+        Video.objects
+        .filter(visibility='public', created_at__gte=cutoff)
+        .exclude(author_id__in=blocked)
+        .annotate(score=Count('likes') + Count('reposts'))
+        .order_by('-score', '-views_count')[:30]
+    )
+
+    # Suggested users: not yet followed, ordered by follower count
+    following_ids = set(request.user.following.values_list('following_id', flat=True))
+    following_ids.add(request.user.pk)
+    suggested_users = (
+        User.objects
+        .exclude(pk__in=following_ids | blocked)
+        .filter(is_active=True)
+        .annotate(followers_count=Count('followers'))
+        .order_by('-followers_count')[:10]
+    )
+
+    from users.serializers import UserMiniSerializer
+    return Response({
+        'trending': VideoSerializer(trending, many=True, context={'request': request}).data,
+        'suggested_users': UserMiniSerializer(suggested_users, many=True).data,
+    })
+
+
+# ─── Hashtag Subscriptions ────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def subscribe_hashtag(request, name):
+    tag = get_object_or_404(Hashtag, name=name.lower())
+    HashtagSubscription.objects.get_or_create(user=request.user, hashtag=tag)
+    return Response({'subscribed': True})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unsubscribe_hashtag(request, name):
+    tag = get_object_or_404(Hashtag, name=name.lower())
+    HashtagSubscription.objects.filter(user=request.user, hashtag=tag).delete()
+    return Response({'subscribed': False})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def hashtag_subscription_status(request, name):
+    tag = Hashtag.objects.filter(name=name.lower()).first()
+    if not tag:
+        return Response({'subscribed': False})
+    subscribed = HashtagSubscription.objects.filter(user=request.user, hashtag=tag).exists()
+    return Response({'subscribed': subscribed})
+
+
+class SubscriptionsFeedView(generics.ListAPIView):
+    """Videos from hashtags the user subscribed to."""
+    serializer_class = VideoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        blocked = get_blocked_ids(self.request.user)
+        subscribed_tags = self.request.user.hashtag_subscriptions.values_list('hashtag_id', flat=True)
+        return (
+            Video.objects
+            .filter(hashtags__in=subscribed_tags, visibility='public')
+            .exclude(author_id__in=blocked)
+            .distinct()
+            .order_by('-created_at')
+        )
+
+
+# ─── Admin / Moderation ───────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAdminUser])
+def admin_stats(request):
+    from django.db.models import Count
+    return Response({
+        'users':   User.objects.count(),
+        'videos':  Video.objects.count(),
+        'reports': VideoReport.objects.count(),
+        'flagged': Video.objects.filter(is_flagged=True).count(),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAdminUser])
+def admin_reports(request):
+    """Videos with at least one report, sorted by report count."""
+    from django.db.models import Count
+    videos = (
+        Video.objects
+        .annotate(report_count=Count('reports'))
+        .filter(report_count__gt=0)
+        .select_related('author')
+        .order_by('-report_count', '-created_at')[:100]
+    )
+    data = []
+    for v in videos:
+        thumb = None
+        try:
+            thumb = v.thumbnail.url if v.thumbnail else None
+        except Exception:
+            pass
+        reasons = list(v.reports.values_list('reason', flat=True).distinct())
+        data.append({
+            'id': v.pk,
+            'caption': v.caption,
+            'author': v.author.username,
+            'thumbnail': thumb,
+            'report_count': v.report_count,
+            'reasons': reasons,
+            'is_flagged': v.is_flagged,
+            'created_at': v.created_at.isoformat(),
+        })
+    return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def admin_delete_video(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    video.delete()
+    return Response({'detail': 'Deleted.'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def admin_dismiss_reports(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    video.reports.all().delete()
+    Video.objects.filter(pk=pk).update(is_flagged=False)
+    return Response({'detail': 'Reports cleared.'})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAdminUser])
+def admin_users(request):
+    q = request.GET.get('q', '').strip()
+    qs = User.objects.all().order_by('-date_joined')
+    if q:
+        qs = qs.filter(username__icontains=q)
+    data = [
+        {
+            'id': u.pk,
+            'username': u.username,
+            'email': u.email,
+            'is_active': u.is_active,
+            'is_staff': u.is_staff,
+            'date_joined': u.date_joined.isoformat(),
+            'videos_count': u.videos.count(),
+        }
+        for u in qs[:100]
+    ]
+    return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def admin_toggle_ban(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if user.is_staff:
+        return Response({'detail': 'Cannot ban staff.'}, status=403)
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+    return Response({'is_active': user.is_active})

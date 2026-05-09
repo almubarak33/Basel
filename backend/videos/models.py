@@ -142,6 +142,21 @@ class PhotoSlide(models.Model):
         ordering = ['order']
 
 
+class HashtagSubscription(models.Model):
+    """User subscribes to a hashtag to get a personalised feed."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='hashtag_subscriptions',
+    )
+    hashtag = models.ForeignKey(Hashtag, on_delete=models.CASCADE, related_name='subscribers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'hashtag')
+        ordering = ['-created_at']
+
+
 class VideoReport(models.Model):
     REASONS = [
         ('nsfw', 'Sexually explicit'),

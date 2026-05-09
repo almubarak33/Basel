@@ -2,21 +2,30 @@ from django.urls import path
 from .views import (
     ForYouFeedView, FollowingFeedView, VideoUploadView, VideoDetailView,
     UserVideosView, HashtagVideosView, TrendingHashtagsView, SearchView,
-    VideoCommentListCreateView, SavedVideosView,
+    VideoCommentListCreateView, SavedVideosView, SubscriptionsFeedView,
     like_video, unlike_video,
     save_video, unsave_video,
     repost_video, unrepost_video,
     report_video, download_video, edit_video,
+    explore_feed,
+    subscribe_hashtag, unsubscribe_hashtag, hashtag_subscription_status,
+    admin_stats, admin_reports, admin_delete_video, admin_dismiss_reports,
+    admin_users, admin_toggle_ban,
 )
 
 urlpatterns = [
     path('foryou/', ForYouFeedView.as_view()),
     path('following/', FollowingFeedView.as_view()),
+    path('subscriptions/', SubscriptionsFeedView.as_view()),
+    path('explore/', explore_feed),
     path('upload/', VideoUploadView.as_view()),
     path('search/', SearchView.as_view()),
     path('trending/', TrendingHashtagsView.as_view()),
     path('saved/', SavedVideosView.as_view()),
     path('hashtag/<str:name>/', HashtagVideosView.as_view()),
+    path('hashtag/<str:name>/subscribe/', subscribe_hashtag),
+    path('hashtag/<str:name>/unsubscribe/', unsubscribe_hashtag),
+    path('hashtag/<str:name>/subscription/', hashtag_subscription_status),
     path('<int:pk>/', VideoDetailView.as_view()),
     path('<int:pk>/like/', like_video),
     path('<int:pk>/unlike/', unlike_video),
@@ -29,4 +38,11 @@ urlpatterns = [
     path('<int:pk>/download/', download_video),
     path('<int:pk>/edit/', edit_video),
     path('user/<str:username>/', UserVideosView.as_view()),
+    # Admin / moderation
+    path('admin/stats/', admin_stats),
+    path('admin/reports/', admin_reports),
+    path('admin/reports/<int:pk>/delete/', admin_delete_video),
+    path('admin/reports/<int:pk>/dismiss/', admin_dismiss_reports),
+    path('admin/users/', admin_users),
+    path('admin/users/<int:pk>/toggle-ban/', admin_toggle_ban),
 ]

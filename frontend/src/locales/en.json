@@ -12,9 +12,11 @@
   "feed": {
     "for_you": "For You",
     "following": "Following",
+    "subscriptions": "🔔 Tags",
     "saved": "🔖 Saved",
     "empty_following": "Follow people to see their videos here!",
     "empty_saved": "You haven't saved any videos yet.",
+    "empty_subscriptions": "Subscribe to hashtags to see their videos here!",
     "empty": "No videos yet!"
   },
 
@@ -167,13 +169,17 @@
     "placeholder": "Search videos, #hashtags, people…",
     "videos_tab": "Videos",
     "users_tab": "People",
-    "trending": "🔥 Trending",
+    "trending": "🔥 Trending Hashtags",
+    "trending_videos": "🔥 Trending Videos",
+    "suggested_users": "✨ People You May Know",
     "no_results": "No results for \"{{query}}\"",
     "videos_count": "videos"
   },
 
   "hashtag": {
-    "videos_count": "videos"
+    "videos_count": "videos",
+    "subscribe": "Subscribe",
+    "subscribed": "Subscribed ✓"
   },
 
   "camera": {
@@ -289,6 +295,30 @@
     "chat_placeholder": "Say something…",
     "end_stream": "End",
     "watching": "watching"
+  },
+
+  "admin": {
+    "title": "Admin Panel",
+    "reports_tab": "Reports",
+    "users_tab": "Users",
+    "stats_tab": "Stats",
+    "no_reports": "No pending reports.",
+    "reports_count": "report(s)",
+    "delete_video": "🗑 Delete Video",
+    "dismiss": "Dismiss",
+    "confirm_delete_video": "Permanently delete this video?",
+    "search_users": "Search users…",
+    "videos": "videos",
+    "banned": "Banned",
+    "staff": "Staff",
+    "ban": "🚫 Ban",
+    "unban": "🔓 Unban",
+    "confirm_ban": "Ban this user?",
+    "confirm_unban": "Unban this user?",
+    "stat_users": "Total Users",
+    "stat_videos": "Total Videos",
+    "stat_reports": "Total Reports",
+    "stat_flagged": "Flagged Videos"
   },
 
   "common": {

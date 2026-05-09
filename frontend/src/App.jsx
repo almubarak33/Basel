@@ -21,6 +21,7 @@ import EditPostPage from './pages/EditPostPage';
 import SettingsPage from './pages/SettingsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import AdminPage from './pages/AdminPage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ function AppContent() {
           <Route path="/camera" element={<PrivateRoute><CameraPage /></PrivateRoute>} />
           <Route path="/edit-post" element={<PrivateRoute><EditPostPage /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><AppLayout hideNav><SettingsPage /></AppLayout></PrivateRoute>} />
+          <Route path="/admin-panel" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </NotificationProvider>

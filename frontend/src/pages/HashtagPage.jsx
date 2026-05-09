@@ -10,6 +10,8 @@ export default function HashtagPage() {
   const { t } = useTranslation();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [subscribed, setSubscribed] = useState(false);
+  const [subLoading, setSubLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -17,7 +19,27 @@ export default function HashtagPage() {
       .then(({ data }) => setVideos(data.results || data))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    api.get(`/videos/hashtag/${tag}/subscription/`)
+      .then(({ data }) => setSubscribed(data.subscribed))
+      .catch(() => {})
+      .finally(() => setSubLoading(false));
   }, [tag]);
+
+  const toggleSubscribe = async () => {
+    setSubLoading(true);
+    try {
+      if (subscribed) {
+        await api.delete(`/videos/hashtag/${tag}/unsubscribe/`);
+        setSubscribed(false);
+      } else {
+        await api.post(`/videos/hashtag/${tag}/subscribe/`);
+        setSubscribed(true);
+      }
+    } catch {} finally {
+      setSubLoading(false);
+    }
+  };
 
   const fmt = (n) => {
     if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -33,6 +55,13 @@ export default function HashtagPage() {
           <h2 className={s.tagName}>#{tag}</h2>
           <p className={s.tagCount}>{fmt(videos.length)} {t('hashtag.videos_count')}</p>
         </div>
+        <button
+          className={subscribed ? s.subBtnActive : s.subBtn}
+          onClick={toggleSubscribe}
+          disabled={subLoading}
+        >
+          {subscribed ? t('hashtag.subscribed') : t('hashtag.subscribe')}
+        </button>
       </div>
 
       {loading ? (

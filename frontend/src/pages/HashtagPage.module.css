@@ -28,7 +28,30 @@
   flex-shrink: 0;
 }
 
-.headerInfo {}
+.headerInfo { flex: 1; }
+
+.subBtn {
+  background: #fe2c55;
+  color: #fff;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: .78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: opacity .2s;
+}
+.subBtn:disabled { opacity: .5; }
+
+.subBtnActive {
+  background: #222;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid #333;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: .78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
 
 .tagName {
   font-size: 18px;

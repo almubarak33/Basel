@@ -6,9 +6,10 @@ import VideoItem from '../components/VideoItem';
 import s from './FeedPage.module.css';
 
 const ENDPOINT = {
-  foryou:    '/videos/foryou/',
-  following: '/videos/following/',
-  saved:     '/videos/saved/',
+  foryou:        '/videos/foryou/',
+  following:     '/videos/following/',
+  saved:         '/videos/saved/',
+  subscriptions: '/videos/subscriptions/',
 };
 
 export default function FeedPage() {
@@ -22,9 +23,10 @@ export default function FeedPage() {
   const touchStartY = useRef(null);
 
   const TABS = [
-    { key: 'foryou',    label: t('feed.for_you') },
-    { key: 'following', label: t('feed.following') },
-    { key: 'saved',     label: t('feed.saved') },
+    { key: 'foryou',        label: t('feed.for_you') },
+    { key: 'following',     label: t('feed.following') },
+    { key: 'subscriptions', label: t('feed.subscriptions') },
+    { key: 'saved',         label: t('feed.saved') },
   ];
 
   const fetchVideos = useCallback(async (t_) => {
@@ -73,6 +75,7 @@ export default function FeedPage() {
 
   const emptyMsg = tab === 'following' ? t('feed.empty_following')
     : tab === 'saved' ? t('feed.empty_saved')
+    : tab === 'subscriptions' ? t('feed.empty_subscriptions')
     : t('feed.empty');
 
   return (

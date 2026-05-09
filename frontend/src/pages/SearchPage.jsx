@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import s from './SearchPage.module.css';
 
 export default function SearchPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [trending, setTrending] = useState([]);
   const [users, setUsers] = useState([]);
+  const [explore, setExplore] = useState({ trending: [], suggested_users: [] });
   const [loading, setLoading] = useState(false);
+  const [exploreLoading, setExploreLoading] = useState(true);
   const [tab, setTab] = useState('videos'); // videos | users
 
   useEffect(() => {
     api.get('/videos/trending/').then(({ data }) => setTrending(data.results || data)).catch(() => {});
+    setExploreLoading(true);
+    api.get('/videos/explore/')
+      .then(({ data }) => setExplore(data))
+      .catch(() => {})
+      .finally(() => setExploreLoading(false));
   }, []);
 
   const handleSearch = async (e) => {
@@ -114,9 +122,54 @@ export default function SearchPage() {
           <p className={s.empty}>{t('search.no_results', { query })}</p>
         )}
 
+        {/* Explore — shown when no query */}
         {!query && !loading && (
           <>
-            <h3 className={s.sectionTitle}>{t('search.trending')}</h3>
+            {/* Suggested users */}
+            {explore.suggested_users?.length > 0 && (
+              <>
+                <h3 className={s.sectionTitle}>{t('search.suggested_users')}</h3>
+                <div className={s.suggestedRow}>
+                  {explore.suggested_users.map((u) => (
+                    <div
+                      key={u.id}
+                      className={s.suggestedCard}
+                      onClick={() => navigate(`/profile/${u.username}`)}
+                    >
+                      <img
+                        src={u.avatar || `https://ui-avatars.com/api/?name=${u.username}&background=fe2c55&color=fff&size=60`}
+                        alt=""
+                        className={s.suggestedAvatar}
+                      />
+                      <div className={s.suggestedName}>@{u.username}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Trending videos */}
+            {!exploreLoading && explore.trending?.length > 0 && (
+              <>
+                <h3 className={s.sectionTitle} style={{ marginTop: 20 }}>{t('search.trending_videos')}</h3>
+                <div className={s.grid}>
+                  {explore.trending.map((v) => (
+                    <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
+                      {v.thumbnail
+                        ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
+                        : v.slides?.[0]?.image
+                          ? <img src={v.slides[0].image} alt="" className={s.thumbImg} />
+                          : <video src={v.video_file} className={s.thumbImg} muted />
+                      }
+                      <div className={s.thumbOverlay}>▶ {fmt(v.views_count)}</div>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Trending hashtags */}
+            <h3 className={s.sectionTitle} style={{ marginTop: 20 }}>{t('search.trending')}</h3>
             <div className={s.tags}>
               {trending.map((tag) => (
                 <Link key={tag.id} to={`/hashtag/${tag.name}`} className={s.tag}>

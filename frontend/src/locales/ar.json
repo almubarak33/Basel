@@ -12,9 +12,11 @@
   "feed": {
     "for_you": "لك",
     "following": "أتابعه",
+    "subscriptions": "🔔 وسومي",
     "saved": "🔖 المحفوظ",
     "empty_following": "تابع أشخاصاً لترى فيديوهاتهم هنا!",
     "empty_saved": "لم تحفظ أي فيديو بعد.",
+    "empty_subscriptions": "اشترك في وسوم لترى فيديوهاتها هنا!",
     "empty": "لا توجد فيديوهات بعد!"
   },
 
@@ -168,12 +170,16 @@
     "videos_tab": "فيديوهات",
     "users_tab": "أشخاص",
     "trending": "🔥 الأوسمة الرائجة",
+    "trending_videos": "🔥 فيديوهات رائجة",
+    "suggested_users": "✨ أشخاص قد تعرفهم",
     "no_results": "لا نتائج لـ \"{{query}}\"",
     "videos_count": "فيديو"
   },
 
   "hashtag": {
-    "videos_count": "فيديو"
+    "videos_count": "فيديو",
+    "subscribe": "اشترك",
+    "subscribed": "مشترك ✓"
   },
 
   "camera": {
@@ -289,6 +295,30 @@
     "chat_placeholder": "أضف تعليقاً…",
     "end_stream": "إنهاء",
     "watching": "يشاهد"
+  },
+
+  "admin": {
+    "title": "لوحة الإدارة",
+    "reports_tab": "البلاغات",
+    "users_tab": "المستخدمون",
+    "stats_tab": "الإحصاء",
+    "no_reports": "لا توجد بلاغات معلقة.",
+    "reports_count": "بلاغ",
+    "delete_video": "🗑 حذف الفيديو",
+    "dismiss": "تجاهل",
+    "confirm_delete_video": "حذف هذا الفيديو نهائياً؟",
+    "search_users": "بحث عن مستخدم…",
+    "videos": "فيديو",
+    "banned": "محظور",
+    "staff": "مشرف",
+    "ban": "🚫 حظر",
+    "unban": "🔓 رفع الحظر",
+    "confirm_ban": "حظر هذا المستخدم؟",
+    "confirm_unban": "رفع الحظر عن هذا المستخدم؟",
+    "stat_users": "المستخدمون",
+    "stat_videos": "الفيديوهات",
+    "stat_reports": "البلاغات",
+    "stat_flagged": "فيديوهات مُبلَّغ عنها"
   },
 
   "common": {
