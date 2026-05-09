@@ -5,7 +5,7 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import s from './ConversationPage.module.css';
 
-const WS_HOST = process.env.REACT_APP_WS_HOST || 'localhost:8000';
+const WS_HOST = process.env.REACT_APP_WS_HOST || window.location.host;
 
 export default function ConversationPage() {
   const { id } = useParams();

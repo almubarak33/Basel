@@ -29,7 +29,7 @@ export default function LivePage() {
     });
 
     const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = process.env.REACT_APP_WS_HOST || 'localhost:8000';
+    const wsHost = process.env.REACT_APP_WS_HOST || window.location.host;
     const ws = new WebSocket(`${wsProto}//${wsHost}/ws/live/${id}/`);
     wsRef.current = ws;
 

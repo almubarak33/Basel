@@ -7,7 +7,7 @@ export function useNotifications() {
   return useContext(NotificationContext);
 }
 
-const WS_HOST = process.env.REACT_APP_WS_HOST || 'localhost:8000';
+const WS_HOST = process.env.REACT_APP_WS_HOST || window.location.host;
 
 export function NotificationProvider({ children, user }) {
   const [unread, setUnread] = useState(0);
