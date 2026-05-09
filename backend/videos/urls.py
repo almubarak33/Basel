@@ -6,7 +6,7 @@ from .views import (
     like_video, unlike_video,
     save_video, unsave_video,
     repost_video, unrepost_video,
-    report_video, download_video,
+    report_video, download_video, edit_video,
 )
 
 urlpatterns = [
@@ -27,5 +27,6 @@ urlpatterns = [
     path('<int:pk>/comments/', VideoCommentListCreateView.as_view()),
     path('<int:pk>/report/', report_video),
     path('<int:pk>/download/', download_video),
+    path('<int:pk>/edit/', edit_video),
     path('user/<str:username>/', UserVideosView.as_view()),
 ]

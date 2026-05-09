@@ -14,7 +14,16 @@ class ConversationListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return self.request.user.conversations.prefetch_related('participants', 'messages')
+        from users.models import Block
+        blocked_ids = set(
+            Block.objects.filter(blocker=self.request.user).values_list('blocked_id', flat=True)
+        ) | set(
+            Block.objects.filter(blocked=self.request.user).values_list('blocker_id', flat=True)
+        )
+        qs = self.request.user.conversations.prefetch_related('participants', 'messages')
+        if blocked_ids:
+            qs = qs.exclude(participants__pk__in=blocked_ids)
+        return qs
 
 
 class ConversationDetailView(generics.ListAPIView):
@@ -58,6 +67,13 @@ def send_message(request, pk):
     conv = get_object_or_404(Conversation, pk=pk)
     if not conv.participants.filter(pk=request.user.pk).exists():
         return Response({'detail': 'Not allowed.'}, status=403)
+
+    # Block check: neither party should have blocked the other
+    from users.models import Block
+    other_ids = conv.participants.exclude(pk=request.user.pk).values_list('pk', flat=True)
+    if Block.objects.filter(blocker=request.user, blocked_id__in=other_ids).exists() or \
+       Block.objects.filter(blocked=request.user, blocker_id__in=other_ids).exists():
+        return Response({'detail': 'Cannot message a blocked user.'}, status=403)
 
     content = request.data.get('content', '').strip()
     if not content:

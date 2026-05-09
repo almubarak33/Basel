@@ -59,7 +59,33 @@
     "password": "Password",
     "logging_in": "Logging in…",
     "login_btn": "Log In",
-    "wrong_credentials": "Incorrect username or password."
+    "wrong_credentials": "Incorrect username or password.",
+    "forgot_password": "Forgot password?",
+    "forgot_password_title": "Reset Password",
+    "forgot_password_sub": "Enter your email and we'll send you a reset link",
+    "email": "Email",
+    "send_reset_link": "Send Reset Link",
+    "sending": "Sending…",
+    "reset_link_sent": "A reset link has been sent to your email.",
+    "reset_password_title": "New Password",
+    "reset_password_sub": "Enter your new password",
+    "reset_btn": "Reset Password",
+    "resetting": "Resetting…",
+    "reset_success": "Password changed! Please log in.",
+    "invalid_token": "Link is invalid or expired.",
+    "back_to_login": "Back to Login",
+    "register_title": "Create Account",
+    "register_sub": "Join and start sharing",
+    "password_min": "Password (at least 8 characters)",
+    "confirm_password": "Confirm Password",
+    "creating": "Creating…",
+    "register_btn": "Create Account",
+    "have_account": "Already have an account?",
+    "login_link": "Log In",
+    "no_account": "Don't have an account?",
+    "register_link": "Create account",
+    "passwords_mismatch": "Passwords do not match.",
+    "register_failed": "Failed to create account."
   },
 
   "profile": {
@@ -226,7 +252,13 @@
     "report_other": "❓ Other",
     "cancel": "Cancel",
     "age_restricted": "This content is restricted to adults only",
-    "confirm_age": "Confirm — I'm 18+"
+    "confirm_age": "Confirm — I'm 18+",
+    "edit": "Edit",
+    "edit_caption": "Caption",
+    "edit_visibility": "Visibility",
+    "edit_save": "Save",
+    "edit_saving": "Saving…",
+    "edit_saved": "Saved ✓"
   },
 
   "comments": {

@@ -28,6 +28,10 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
   const [showReport, setShowReport] = useState(false);
   const [reported, setReported] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editCaption, setEditCaption] = useState('');
+  const [editVisibility, setEditVisibility] = useState('public');
+  const [editSaving, setEditSaving] = useState(false);
 
   // Photo carousel
   const [slideIndex, setSlideIndex] = useState(0);
@@ -110,6 +114,26 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
     } else {
       const { data } = await api.post(`/videos/${video.id}/repost/`);
       onUpdate({ ...video, is_reposted: true, reposts_count: data.reposts_count });
+    }
+  };
+
+  const openEdit = () => {
+    setEditCaption(video.caption || '');
+    setEditVisibility(video.visibility || 'public');
+    setShowEdit(true);
+  };
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    try {
+      const { data } = await api.patch(`/videos/${video.id}/edit/`, {
+        caption: editCaption,
+        visibility: editVisibility,
+      });
+      onUpdate({ ...video, caption: data.caption, visibility: data.visibility });
+      setShowEdit(false);
+    } catch {} finally {
+      setEditSaving(false);
     }
   };
 
@@ -266,7 +290,10 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
             <FollowBtn authorUsername={video.author.username} />
           )}
           {user?.username === video.author.username && (
-            <button className={s.deleteBtn} onClick={handleDelete}>{t('video_item.delete')}</button>
+            <>
+              <button className={s.editBtn} onClick={openEdit}>✏️</button>
+              <button className={s.deleteBtn} onClick={handleDelete}>{t('video_item.delete')}</button>
+            </>
           )}
         </div>
 
@@ -343,6 +370,36 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
           onClose={() => setShowComments(false)}
           onCount={(c) => onUpdate({ ...video, comments_count: c })}
         />
+      )}
+
+      {showEdit && (
+        <div className={s.editOverlay} onClick={() => setShowEdit(false)}>
+          <div className={s.editModal} onClick={(e) => e.stopPropagation()}>
+            <p className={s.editModalTitle}>{t('video_item.edit')}</p>
+            <textarea
+              className={s.editTextarea}
+              placeholder={t('video_item.edit_caption')}
+              value={editCaption}
+              onChange={(e) => setEditCaption(e.target.value)}
+              maxLength={2200}
+            />
+            <select
+              className={s.editSelect}
+              value={editVisibility}
+              onChange={(e) => setEditVisibility(e.target.value)}
+            >
+              <option value="public">{t('edit_post.public')}</option>
+              <option value="friends">{t('edit_post.friends')}</option>
+              <option value="private">{t('edit_post.private')}</option>
+            </select>
+            <button className={s.editSaveBtn} onClick={handleEditSave} disabled={editSaving}>
+              {editSaving ? t('video_item.edit_saving') : t('video_item.edit_save')}
+            </button>
+            <button className={s.editCancelBtn} onClick={() => setShowEdit(false)}>
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

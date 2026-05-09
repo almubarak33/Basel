@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import BottomNav from './components/BottomNav';
 import FeedPage from './pages/FeedPage';
 import SearchPage from './pages/SearchPage';
@@ -18,6 +19,8 @@ import ChooseUsernamePage from './pages/ChooseUsernamePage';
 import CameraPage from './pages/CameraPage';
 import EditPostPage from './pages/EditPostPage';
 import SettingsPage from './pages/SettingsPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -45,13 +48,16 @@ function AppLayout({ children, hideNav }) {
   );
 }
 
-export default function App() {
+function AppContent() {
+  const { user } = useAuth();
   return (
-    <AuthProvider>
+    <NotificationProvider user={user}>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
           <Route path="/" element={<PrivateRoute><AppLayout><FeedPage /></AppLayout></PrivateRoute>} />
           <Route path="/search" element={<PrivateRoute><AppLayout><SearchPage /></AppLayout></PrivateRoute>} />
           <Route path="/upload" element={<PrivateRoute><AppLayout hideNav><UploadPage /></AppLayout></PrivateRoute>} />
@@ -69,6 +75,14 @@ export default function App() {
           <Route path="/settings" element={<PrivateRoute><AppLayout hideNav><SettingsPage /></AppLayout></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
+    </NotificationProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   );
 }

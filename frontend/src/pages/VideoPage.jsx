@@ -16,13 +16,25 @@ export default function VideoPage() {
   if (!video) return <div className={s.loading}><div className={s.spinner} /></div>;
 
   return (
-    <div style={{ height: '100vh', background: '#000' }}>
+    <div style={{ height: '100vh', background: '#000', position: 'relative' }}>
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          position: 'absolute', top: 14, left: 14, zIndex: 20,
+          background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff',
+          fontSize: '1.3rem', width: 38, height: 38, borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        ←
+      </button>
       <VideoItem
         video={video}
         isActive
         onUpdate={setVideo}
         onDelete={() => navigate('/')}
-        showFull
+        onNext={() => navigate(-1)}
       />
     </div>
   );

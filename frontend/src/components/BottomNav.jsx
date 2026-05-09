@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import api from '../api/axios';
 import s from './BottomNav.module.css';
 
@@ -10,22 +11,20 @@ export default function BottomNav() {
   const location = useLocation();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { unread: notifUnread, clearUnread } = useNotifications();
   const p = location.pathname;
 
   const [msgBadge, setMsgBadge] = useState(0);
-  const [notifBadge, setNotifBadge] = useState(0);
   const [friendsBadge, setFriendsBadge] = useState(0);
 
   useEffect(() => {
     const fetchBadges = async () => {
       try {
-        const [m, n, f] = await Promise.all([
+        const [m, f] = await Promise.all([
           api.get('/messages/unread/'),
-          api.get('/notifications/unread/'),
           api.get('/users/friend-requests/'),
         ]);
         setMsgBadge(m.data.unread || 0);
-        setNotifBadge(n.data.unread || 0);
         setFriendsBadge(Array.isArray(f.data) ? f.data.length : 0);
       } catch {}
     };
@@ -65,8 +64,8 @@ export default function BottomNav() {
         <span className={s.plusIcon}>+</span>
       </button>
 
-      <button className={`${s.btn} ${p === '/inbox' ? s.active : ''}`} onClick={() => navigate('/inbox')}>
-        <Badge count={msgBadge + notifBadge} />
+      <button className={`${s.btn} ${p === '/inbox' ? s.active : ''}`} onClick={() => { navigate('/inbox'); clearUnread(); }}>
+        <Badge count={msgBadge + notifUnread} />
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>

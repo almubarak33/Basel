@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -56,6 +56,8 @@ export default function LoginPage() {
             {loading ? t('auth.logging_in') : t('auth.login_btn')}
           </button>
         </form>
+        <Link to="/forgot-password" className={s.link}>{t('auth.forgot_password')}</Link>
+        <p className={s.switch}>{t('auth.no_account')} <Link to="/register">{t('auth.register_link')}</Link></p>
       </div>
     </div>
   );

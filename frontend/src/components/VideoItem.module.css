@@ -328,6 +328,81 @@
   z-index: 10;
 }
 
+/* Edit post modal */
+.editOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.editModal {
+  width: 100%;
+  background: #111;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 20px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.editModalTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+}
+.editTextarea {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #fff;
+  padding: 12px 14px;
+  font-size: .9rem;
+  resize: none;
+  height: 90px;
+  width: 100%;
+}
+.editTextarea:focus { border-color: #fe2c55; }
+.editSelect {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #fff;
+  padding: 11px 14px;
+  font-size: .9rem;
+  width: 100%;
+}
+.editSaveBtn {
+  padding: 12px;
+  background: #fe2c55;
+  color: #fff;
+  border-radius: 50px;
+  font-size: .95rem;
+  font-weight: 700;
+  transition: opacity .2s;
+}
+.editSaveBtn:disabled { opacity: .5; }
+.editCancelBtn {
+  padding: 10px;
+  background: transparent;
+  color: #888;
+  font-size: .88rem;
+  text-align: center;
+}
+.editBtn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: .75rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
 /* Report menu */
 .reportMenu {
   position: absolute;

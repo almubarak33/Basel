@@ -26,9 +26,26 @@ def _notify(recipient, sender, ntype, text='', video=None):
         return
     try:
         from notifications.models import Notification
-        Notification.objects.create(
+        notif = Notification.objects.create(
             recipient=recipient, sender=sender,
             type=ntype, text=text, video=video,
+        )
+        # Push over WebSocket so recipient gets instant notification
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        avatar = sender.avatar.url if (sender and sender.avatar) else None
+        payload = {
+            'id': notif.pk,
+            'type': ntype,
+            'text': text,
+            'is_read': False,
+            'created_at': notif.created_at.isoformat(),
+            'sender': {'username': sender.username, 'avatar': avatar} if sender else None,
+            'video_thumbnail': video.thumbnail.url if (video and video.thumbnail) else None,
+        }
+        async_to_sync(get_channel_layer().group_send)(
+            f'notifications_{recipient.pk}',
+            {'type': 'push_notification', 'data': payload},
         )
     except Exception:
         pass
@@ -451,6 +468,19 @@ class VideoCommentListCreateView(generics.ListCreateAPIView):
                 f'@{self.request.user.username} commented on your video.',
                 video=video,
             )
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def edit_video(request, pk):
+    """Update caption / visibility / age-restriction on own video."""
+    video = get_object_or_404(Video, pk=pk, author=request.user)
+    allowed = {'caption', 'visibility', 'is_age_restricted'}
+    data = {k: v for k, v in request.data.items() if k in allowed}
+    serializer = VideoSerializer(video, data=data, partial=True, context={'request': request})
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data)
 
 
 @api_view(['POST'])

@@ -4,21 +4,44 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.utils.crypto import get_random_string
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings as django_settings
 from .models import Follow, Block, FriendRequest
 from .serializers import RegisterSerializer, UserSerializer, UserMiniSerializer
 
 User = get_user_model()
 
+_RESET_CACHE_PREFIX = 'pwd_reset_'
+_RESET_TTL = 3600  # 1 hour
+
 
 def _notify(recipient, sender, ntype, text='', video=None):
-    """Helper to create a notification without circular imports."""
+    """Create a notification and push it over WebSocket."""
     if recipient == sender:
         return
     try:
         from notifications.models import Notification
-        Notification.objects.create(
+        notif = Notification.objects.create(
             recipient=recipient, sender=sender,
             type=ntype, text=text, video=video,
+        )
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        avatar = sender.avatar.url if (sender and sender.avatar) else None
+        payload = {
+            'id': notif.pk,
+            'type': ntype,
+            'text': text,
+            'is_read': False,
+            'created_at': notif.created_at.isoformat(),
+            'sender': {'username': sender.username, 'avatar': avatar} if sender else None,
+            'video_thumbnail': video.thumbnail.url if (video and video.thumbnail) else None,
+        }
+        async_to_sync(get_channel_layer().group_send)(
+            f'notifications_{recipient.pk}',
+            {'type': 'push_notification', 'data': payload},
         )
     except Exception:
         pass
@@ -256,3 +279,57 @@ def blocked_list(request):
     blocked = User.objects.filter(blocked_by__blocker=request.user)
     serializer = UserSerializer(blocked, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def forgot_password(request):
+    email = request.data.get('email', '').strip().lower()
+    if not email:
+        return Response({'error': 'البريد الإلكتروني مطلوب.'}, status=400)
+
+    # Always return success to avoid leaking whether an email is registered
+    user = User.objects.filter(email__iexact=email).first()
+    if user:
+        token = get_random_string(48)
+        cache.set(f'{_RESET_CACHE_PREFIX}{token}', user.pk, _RESET_TTL)
+
+        reset_link = f'{getattr(django_settings, "FRONTEND_URL", "http://localhost:3000")}/reset-password?token={token}'
+        try:
+            send_mail(
+                'SayHi — إعادة تعيين كلمة المرور',
+                f'مرحباً {user.username},\n\nانقر على الرابط أدناه لإعادة تعيين كلمة مرورك (صالح لساعة واحدة):\n{reset_link}\n\nإذا لم تطلب ذلك، تجاهل هذه الرسالة.',
+                getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@sayhi.app'),
+                [email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+    return Response({'detail': 'إذا كان البريد الإلكتروني مسجلاً، ستصل رسالة الاسترداد قريباً.'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def reset_password(request):
+    token = request.data.get('token', '').strip()
+    new_password = request.data.get('new_password', '')
+
+    if not token:
+        return Response({'error': 'الرمز مطلوب.'}, status=400)
+    if len(new_password) < 8:
+        return Response({'error': 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.'}, status=400)
+
+    user_pk = cache.get(f'{_RESET_CACHE_PREFIX}{token}')
+    if not user_pk:
+        return Response({'error': 'الرمز غير صالح أو منتهي الصلاحية.'}, status=400)
+
+    try:
+        user = User.objects.get(pk=user_pk)
+    except User.DoesNotExist:
+        return Response({'error': 'المستخدم غير موجود.'}, status=400)
+
+    user.set_password(new_password)
+    user.save()
+    cache.delete(f'{_RESET_CACHE_PREFIX}{token}')
+    return Response({'detail': 'تم إعادة تعيين كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن.'})
