@@ -3,10 +3,11 @@ from .views import (
     UserProfileView, follow_user, unfollow_user,
     followers_list, following_list, friends_list,
     send_friend_request, respond_friend_request, pending_friend_requests,
-    block_user, unblock_user, blocked_list,
+    block_user, unblock_user, blocked_list, search_users,
 )
 
 urlpatterns = [
+    path('search/', search_users),
     path('blocked/', blocked_list),
     path('friend-requests/', pending_friend_requests),
     path('friend-requests/<int:pk>/respond/', respond_friend_request),

@@ -17,6 +17,7 @@ import RegisterPage from './pages/RegisterPage';
 import ChooseUsernamePage from './pages/ChooseUsernamePage';
 import CameraPage from './pages/CameraPage';
 import EditPostPage from './pages/EditPostPage';
+import SettingsPage from './pages/SettingsPage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -65,6 +66,7 @@ export default function App() {
           <Route path="/choose-username" element={<PrivateRoute><ChooseUsernamePage /></PrivateRoute>} />
           <Route path="/camera" element={<PrivateRoute><CameraPage /></PrivateRoute>} />
           <Route path="/edit-post" element={<PrivateRoute><EditPostPage /></PrivateRoute>} />
+          <Route path="/settings" element={<PrivateRoute><AppLayout hideNav><SettingsPage /></AppLayout></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

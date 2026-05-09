@@ -91,6 +91,39 @@ def set_username(request):
     return Response(UserSerializer(request.user, context={'request': request}).data)
 
 
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def change_password(request):
+    old = request.data.get('old_password', '')
+    new = request.data.get('new_password', '')
+    if not request.user.check_password(old):
+        return Response({'error': 'كلمة المرور الحالية غير صحيحة.'}, status=400)
+    if len(new) < 8:
+        return Response({'error': 'كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل.'}, status=400)
+    request.user.set_password(new)
+    request.user.save()
+    return Response({'detail': 'تم تغيير كلمة المرور بنجاح.'})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def delete_account(request):
+    request.user.delete()
+    return Response(status=204)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def search_users(request):
+    q = request.query_params.get('q', '').strip()
+    if not q:
+        return Response([])
+    blocked = set(request.user.blocking.values_list('blocked_id', flat=True))
+    blocked |= set(request.user.blocked_by.values_list('blocker_id', flat=True))
+    users = User.objects.filter(username__icontains=q).exclude(pk__in=blocked).exclude(pk=request.user.pk)[:20]
+    return Response(UserMiniSerializer(users, many=True).data)
+
+
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]

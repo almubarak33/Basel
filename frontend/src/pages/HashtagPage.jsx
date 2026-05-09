@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
-import s from './SearchPage.module.css';
-import ps from './ProfilePage.module.css';
+import s from './HashtagPage.module.css';
 
 export default function HashtagPage() {
   const { tag } = useParams();
@@ -11,33 +10,49 @@ export default function HashtagPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/videos/hashtag/${tag}/`).then(({ data }) => setVideos(data.results || data)).finally(() => setLoading(false));
+    setLoading(true);
+    api.get(`/videos/hashtag/${tag}/`)
+      .then(({ data }) => setVideos(data.results || data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [tag]);
 
-  const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n ?? 0;
+  const fmt = (n) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return n ?? 0;
+  };
 
   return (
-    <div style={{ height: '100vh', background: '#000', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: '1px solid #111' }}>
-        <button style={{ color: '#fff', fontSize: '1.2rem' }} onClick={() => navigate(-1)}>←</button>
-        <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 800 }}>#{tag}</h2>
-          <p style={{ fontSize: '.75rem', color: '#666' }}>{videos.length} videos</p>
+    <div className={s.page}>
+      <div className={s.header}>
+        <button className={s.back} onClick={() => navigate(-1)}>←</button>
+        <div className={s.headerInfo}>
+          <h2 className={s.tagName}>#{tag}</h2>
+          <p className={s.tagCount}>{fmt(videos.length)} فيديو</p>
         </div>
       </div>
+
       {loading ? (
-        <div className={s.loader} style={{ marginTop: 40 }}><div className={s.spinner} /></div>
+        <div className={s.loader}><div className={s.spinner} /></div>
+      ) : videos.length === 0 ? (
+        <p className={s.empty}>لا توجد فيديوهات لـ #{tag}</p>
       ) : (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '2px' }}>
-          <div className={s.grid}>
-            {videos.map((v) => (
-              <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
-                {v.thumbnail ? <img src={v.thumbnail} alt="" className={s.thumbImg} /> : <video src={v.video_file} className={s.thumbImg} muted />}
-                <div className={s.thumbOverlay}>▶ {fmt(v.views_count)}</div>
-              </Link>
-            ))}
-          </div>
-          {videos.length === 0 && <p className={s.empty}>No videos for #{tag}</p>}
+        <div className={s.grid}>
+          {videos.map((v) => (
+            <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
+              {v.thumbnail
+                ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
+                : v.slides?.[0]?.image
+                  ? <img src={v.slides[0].image} alt="" className={s.thumbImg} />
+                  : <video src={v.video_file} className={s.thumbImg} muted />
+              }
+              <div className={s.thumbOverlay}>
+                <span>▶ {fmt(v.views_count)}</span>
+                {v.post_type === 'photo' && <span className={s.photoBadge}>📸</span>}
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>

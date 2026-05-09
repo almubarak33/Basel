@@ -26,7 +26,9 @@ export default function LivePage() {
       setIsHost(data.host.username === user?.username);
     });
 
-    const ws = new WebSocket(`ws://localhost:8000/ws/live/${id}/`);
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = process.env.REACT_APP_WS_HOST || 'localhost:8000';
+    const ws = new WebSocket(`${wsProto}//${wsHost}/ws/live/${id}/`);
     wsRef.current = ws;
 
     ws.onmessage = (e) => {
@@ -121,7 +123,7 @@ export default function LivePage() {
             className={s.chatInput}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Say something…"
+            placeholder="أضف تعليقاً…"
             maxLength={200}
           />
           <button className={s.sendBtn} type="submit">↑</button>

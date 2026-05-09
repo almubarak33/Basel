@@ -152,15 +152,47 @@ class VideoUploadView(generics.CreateAPIView):
         post_type = self.request.data.get('post_type', 'video')
         video = serializer.save(author=self.request.user, post_type=post_type)
 
-        # Handle multiple photo slides
         if post_type == 'photo':
             slides = self.request.FILES.getlist('slides')
             for i, img in enumerate(slides):
                 PhotoSlide.objects.create(post=video, image=img, order=i)
         else:
+            # Apply trim before audio merge
+            try:
+                trim_start = float(self.request.data.get('trim_start', 0) or 0)
+                trim_end   = float(self.request.data.get('trim_end',   0) or 0)
+                if trim_end > trim_start > 0 or (trim_end > 0 and trim_start == 0):
+                    self._trim_video(video, trim_start, trim_end)
+            except (TypeError, ValueError):
+                pass
+
             audio = self.request.FILES.get('audio_file')
             if audio:
                 self._merge_audio(video, audio)
+
+    def _trim_video(self, video, start, end):
+        """Trim video to [start, end] seconds using ffmpeg."""
+        video_path = video.video_file.path
+        if not os.path.exists(video_path):
+            return
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp:
+            out_path = tmp.name
+        try:
+            subprocess.run([
+                'ffmpeg', '-y',
+                '-ss', str(start),
+                '-to', str(end),
+                '-i', video_path,
+                '-c', 'copy',
+                out_path,
+            ], check=True, capture_output=True, timeout=120)
+            import shutil
+            shutil.copy2(out_path, video_path)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        finally:
+            if os.path.exists(out_path):
+                os.unlink(out_path)
 
     def _merge_audio(self, video, audio_file):
         """Merge uploaded audio track into the video using ffmpeg."""

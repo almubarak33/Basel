@@ -176,6 +176,12 @@
   background: rgba(255,255,255,0.18);
 }
 
+.toolChipActive {
+  background: rgba(255,48,64,0.3);
+  border-color: #ff3040;
+  color: #ff3040;
+}
+
 /* ── Filter strip ── */
 .filterStrip {
   display: flex;
@@ -217,6 +223,162 @@
 
 .filterActive {
   color: #ff3040;
+}
+
+/* ── Play overlay ── */
+.playOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: rgba(255,255,255,0.85);
+  pointer-events: all;
+  cursor: pointer;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+}
+
+/* ── Video Trim ── */
+.trimBox {
+  background: #0d0d0d;
+  border-top: 1px solid #1e1e1e;
+  border-bottom: 1px solid #1e1e1e;
+  padding: 12px 14px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trimHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.trimPlayBtn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trimTime {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  direction: ltr;
+}
+
+.trimDuration {
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  direction: ltr;
+}
+
+/* Visual track */
+.trimTrack {
+  position: relative;
+  height: 28px;
+  background: #1a1a1a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trimInactive {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  z-index: 1;
+}
+
+.trimActive {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(255,48,64,0.35);
+  border-top: 2px solid #ff3040;
+  border-bottom: 2px solid #ff3040;
+  z-index: 2;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  z-index: 3;
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+
+/* Sliders */
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  direction: rtl;
+}
+
+.sliderLabel {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.trimSlider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #333;
+  outline: none;
+  cursor: pointer;
+  direction: ltr;
+}
+
+.trimSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ff3040;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(255,48,64,0.3);
+}
+
+.trimSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ff3040;
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+.sliderVal {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  width: 32px;
+  text-align: left;
+  direction: ltr;
+  flex-shrink: 0;
 }
 
 /* ── AI card ── */

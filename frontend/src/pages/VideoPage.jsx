@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import VideoItem from '../components/VideoItem';
-import s from './FeedPage.module.css';
+import s from './VideoPage.module.css';
 
 export default function VideoPage() {
   const { id } = useParams();
