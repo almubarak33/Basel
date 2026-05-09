@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import s from './HashtagPage.module.css';
 
 export default function HashtagPage() {
   const { tag } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,14 +31,14 @@ export default function HashtagPage() {
         <button className={s.back} onClick={() => navigate(-1)}>←</button>
         <div className={s.headerInfo}>
           <h2 className={s.tagName}>#{tag}</h2>
-          <p className={s.tagCount}>{fmt(videos.length)} فيديو</p>
+          <p className={s.tagCount}>{fmt(videos.length)} {t('hashtag.videos_count')}</p>
         </div>
       </div>
 
       {loading ? (
         <div className={s.loader}><div className={s.spinner} /></div>
       ) : videos.length === 0 ? (
-        <p className={s.empty}>لا توجد فيديوهات لـ #{tag}</p>
+        <p className={s.empty}>{t('search.no_results', { query: `#${tag}` })}</p>
       ) : (
         <div className={s.grid}>
           {videos.map((v) => (

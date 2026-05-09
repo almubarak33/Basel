@@ -1,0 +1,43 @@
+.wrap {
+  display: flex;
+  background: rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.active {
+  background: #ff3040;
+  color: #fff;
+}
+
+/* Compact toggle button (used in top bars) */
+.compact {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  min-width: 32px;
+  transition: background 0.15s;
+}
+
+.compact:hover {
+  background: rgba(255,255,255,0.2);
+}

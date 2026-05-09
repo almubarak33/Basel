@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import s from './ConversationPage.module.css';
@@ -8,6 +9,7 @@ export default function ConversationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -32,11 +34,13 @@ export default function ConversationPage() {
     } finally { setSending(false); }
   };
 
+  const locale = i18n.language === 'ar' ? 'ar' : 'en';
+
   return (
     <div className={s.page}>
       <div className={s.header}>
         <button className={s.back} onClick={() => navigate('/inbox')}>←</button>
-        <h2>محادثة</h2>
+        <h2>{t('conversation.title')}</h2>
         <div />
       </div>
 
@@ -48,7 +52,7 @@ export default function ConversationPage() {
           >
             <p className={s.bubbleText}>{m.content}</p>
             <span className={s.bubbleTime}>
-              {new Date(m.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })}
+              {new Date(m.created_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         ))}
@@ -58,14 +62,12 @@ export default function ConversationPage() {
       <form className={s.inputRow} onSubmit={send}>
         <input
           className={s.input}
-          placeholder="اكتب رسالة…"
+          placeholder={t('conversation.type_message')}
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={2000}
         />
-        <button className={s.sendBtn} type="submit" disabled={!text.trim() || sending}>
-          ↑
-        </button>
+        <button className={s.sendBtn} type="submit" disabled={!text.trim() || sending}>↑</button>
       </form>
     </div>
   );

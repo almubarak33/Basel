@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import s from './FriendsPage.module.css';
@@ -7,6 +8,7 @@ import s from './FriendsPage.module.css';
 export default function FriendsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [tab, setTab] = useState('requests');
   const [requests, setRequests] = useState([]);
   const [friends, setFriends] = useState([]);
@@ -43,14 +45,14 @@ export default function FriendsPage() {
 
   return (
     <div className={s.page}>
-      <div className={s.header}><h2>الأصدقاء</h2></div>
+      <div className={s.header}><h2>{t('friends.title')}</h2></div>
 
       <div className={s.tabBar}>
         <button className={`${s.tabBtn} ${tab === 'requests' ? s.tabActive : ''}`} onClick={() => setTab('requests')}>
-          طلبات {requests.length > 0 && <span className={s.badge}>{requests.length}</span>}
+          {t('friends.requests_tab')} {requests.length > 0 && <span className={s.badge}>{requests.length}</span>}
         </button>
         <button className={`${s.tabBtn} ${tab === 'friends' ? s.tabActive : ''}`} onClick={() => setTab('friends')}>
-          أصدقائي ({friends.length})
+          {t('friends.my_friends_tab')} ({friends.length})
         </button>
       </div>
 
@@ -59,22 +61,22 @@ export default function FriendsPage() {
           <div className={s.loader}><div className={s.spinner} /></div>
         ) : tab === 'requests' ? (
           requests.length === 0
-            ? <p className={s.empty}>لا توجد طلبات صداقة جديدة.</p>
+            ? <p className={s.empty}>{t('friends.no_requests')}</p>
             : requests.map((r) => (
               <div key={r.id} className={s.reqCard}>
                 <img src={avatarUrl(r.sender)} alt="" className={s.reqAvatar} onClick={() => navigate(`/profile/${r.sender.username}`)} />
                 <div className={s.reqInfo}>
                   <p className={s.reqName}>@{r.sender.username}</p>
                   <div className={s.reqActions}>
-                    <button className={s.acceptBtn} onClick={() => respond(r.id, 'accept')}>قبول</button>
-                    <button className={s.rejectBtn} onClick={() => respond(r.id, 'reject')}>رفض</button>
+                    <button className={s.acceptBtn} onClick={() => respond(r.id, 'accept')}>{t('friends.accept')}</button>
+                    <button className={s.rejectBtn} onClick={() => respond(r.id, 'reject')}>{t('friends.reject')}</button>
                   </div>
                 </div>
               </div>
             ))
         ) : (
           friends.length === 0
-            ? <p className={s.empty}>لا أصدقاء بعد. تابع شخصاً ويتابعك ليصبح صديقك!</p>
+            ? <p className={s.empty}>{t('friends.no_friends')}</p>
             : friends.map((f) => (
               <div key={f.id} className={s.friendCard}>
                 <img src={avatarUrl(f)} alt="" className={s.friendAvatar} onClick={() => navigate(`/profile/${f.username}`)} />
@@ -82,7 +84,7 @@ export default function FriendsPage() {
                   <p className={s.friendName}>@{f.username}</p>
                   {f.is_live && <span className={s.liveBadge}>🔴 LIVE</span>}
                 </div>
-                <button className={s.msgBtn} onClick={() => startChat(f.username)}>💬 رسالة</button>
+                <button className={s.msgBtn} onClick={() => startChat(f.username)}>{t('friends.message')}</button>
               </div>
             ))
         )}

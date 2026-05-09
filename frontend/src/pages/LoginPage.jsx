@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import s from './AuthPage.module.css';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +21,7 @@ export default function LoginPage() {
       await login(form.username, form.password);
       navigate('/');
     } catch {
-      setError('اسم المستخدم أو كلمة المرور غير صحيحة.');
+      setError(t('auth.wrong_credentials'));
     } finally {
       setLoading(false);
     }
@@ -26,15 +29,16 @@ export default function LoginPage() {
 
   return (
     <div className={s.page}>
+      <div className={s.langRow}><LanguageSwitcher /></div>
       <div className={s.logo}>SayHi</div>
-      <p className={s.sub}>تواصل مع العالم عبر مقاطع قصيرة وبث مباشر</p>
+      <p className={s.sub}>{t('auth.slogan')}</p>
       <div className={s.card}>
-        <h2 className={s.title}>تسجيل الدخول</h2>
+        <h2 className={s.title}>{t('auth.login_title')}</h2>
         {error && <div className={s.error}>{error}</div>}
         <form onSubmit={handleSubmit} className={s.form}>
           <input
             className={s.input}
-            placeholder="اسم المستخدم"
+            placeholder={t('auth.username')}
             value={form.username}
             onChange={(e) => setForm({ ...form, username: e.target.value })}
             required
@@ -43,13 +47,13 @@ export default function LoginPage() {
           <input
             className={s.input}
             type="password"
-            placeholder="كلمة المرور"
+            placeholder={t('auth.password')}
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
           />
           <button className={s.btn} type="submit" disabled={loading}>
-            {loading ? 'جاري الدخول…' : 'دخول'}
+            {loading ? t('auth.logging_in') : t('auth.login_btn')}
           </button>
         </form>
       </div>

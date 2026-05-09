@@ -1,32 +1,29 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import s from './EditPostPage.module.css';
 
 const FILTERS = [
-  { name: 'عادي', value: 'none' },
-  { name: 'حيوي', value: 'saturate(1.8) contrast(1.1)' },
-  { name: 'بارد', value: 'hue-rotate(200deg) saturate(1.2)' },
-  { name: 'دافئ', value: 'sepia(0.4) saturate(1.3)' },
-  { name: 'أبيض وأسود', value: 'grayscale(1)' },
-  { name: 'ناعم', value: 'brightness(1.1) contrast(0.9) saturate(0.8)' },
-  { name: 'درامي', value: 'contrast(1.4) brightness(0.9)' },
+  { nameKey: 'normal',   value: 'none' },
+  { nameKey: 'vivid',    value: 'saturate(1.8) contrast(1.1)' },
+  { nameKey: 'cool',     value: 'hue-rotate(200deg) saturate(1.2)' },
+  { nameKey: 'warm',     value: 'sepia(0.4) saturate(1.3)' },
+  { nameKey: 'bw',       value: 'grayscale(1)' },
+  { nameKey: 'soft',     value: 'brightness(1.1) contrast(0.9) saturate(0.8)' },
+  { nameKey: 'dramatic', value: 'contrast(1.4) brightness(0.9)' },
 ];
 
-const VISIBILITY_OPTIONS = [
-  { value: 'public', label: 'عام 🌐' },
-  { value: 'friends', label: 'الأصدقاء 👥' },
-  { value: 'private', label: 'خاص 🔒' },
-];
+const VISIBILITY_KEYS = ['public', 'friends', 'private'];
 
 // ── AI mood analysis via canvas color sampling ──────────────────────────────
 const MOOD_MAP = [
-  { mood: 'نشيط 🔥',    genre: 'هيب هوب / إلكترونيك' },
-  { mood: 'هادئ 🌊',    genre: 'أمبيانت / لو-فاي' },
-  { mood: 'رومانسي 💖', genre: 'بوب / R&B' },
-  { mood: 'طبيعي 🌿',   genre: 'أكوستيك / فولك' },
-  { mood: 'غامض 🌙',    genre: 'إندي / دراما' },
-  { mood: 'مشرق ☀️',   genre: 'بوب صاخب / إندي بوب' },
+  { moodKey: 'active',     genreKey: 'hiphop' },
+  { moodKey: 'calm',       genreKey: 'ambient' },
+  { moodKey: 'romantic',   genreKey: 'pop' },
+  { moodKey: 'natural',    genreKey: 'acoustic' },
+  { moodKey: 'mysterious', genreKey: 'indie' },
+  { moodKey: 'bright',     genreKey: 'indie_pop' },
 ];
 
 function analyzeImageMood(canvas) {
@@ -75,6 +72,7 @@ function fmtTime(sec) {
 export default function EditPostPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const state = location.state || {};
 
   // Media state
@@ -234,7 +232,7 @@ export default function EditPostPage() {
       });
       navigate('/', { replace: true });
     } catch {
-      alert('فشل الرفع. حاول مرة أخرى.');
+      alert(t('edit_post.upload_failed'));
     } finally {
       setUploading(false);
     }
@@ -286,35 +284,35 @@ export default function EditPostPage() {
             )}
           </>
         ) : (
-          <div className={s.emptyPreview}>لا يوجد وسائط</div>
+          <div className={s.emptyPreview}>{t('edit_post.no_media')}</div>
         )}
 
         {/* Top bar */}
         <div className={s.topBar}>
           <button className={s.backBtn} onClick={() => navigate(-1)}>‹</button>
-          <span className={s.topTitle}>تعديل</span>
+          <span className={s.topTitle}>{t('edit_post.title')}</span>
           <button className={s.postBtn} onClick={handlePost} disabled={uploading}>
-            {uploading ? `${uploadProgress}%` : 'نشر'}
+            {uploading ? `${uploadProgress}%` : t('edit_post.post_btn')}
           </button>
         </div>
       </div>
 
       {/* ── Tools strip ── */}
       <div className={s.tools}>
-        <button className={s.toolChip} onClick={() => setShowFilters((v) => !v)}>✦ فلاتر</button>
+        <button className={s.toolChip} onClick={() => setShowFilters((v) => !v)}>{t('edit_post.filters')}</button>
         {isPhoto && (
           <label className={s.toolChip}>
             <input ref={addSlideRef} type="file" multiple accept="image/*" hidden onChange={addMoreSlides} />
-            + إضافة صور
+            {t('edit_post.add_photos')}
           </label>
         )}
         <label className={s.toolChip}>
           <input ref={audioRef} type="file" accept="audio/*" hidden onChange={handleAudioPick} />
-          🎵 {audioName ? audioName.slice(0, 14) + (audioName.length > 14 ? '…' : '') : 'إضافة صوت'}
+          {audioName ? audioName.slice(0, 14) + (audioName.length > 14 ? '…' : '') : t('edit_post.add_sound')}
         </label>
         {!isPhoto && videoDuration > 0 && (
           <button className={`${s.toolChip} ${showTrim ? s.toolChipActive : ''}`} onClick={() => setShowTrim((v) => !v)}>
-            ✂️ قطع
+            {t('edit_post.trim')}
           </button>
         )}
       </div>
@@ -324,7 +322,7 @@ export default function EditPostPage() {
         <div className={s.filterStrip}>
           {FILTERS.map((f) => (
             <button
-              key={f.name}
+              key={f.nameKey}
               className={`${s.filterItem} ${filter === f.value ? s.filterActive : ''}`}
               onClick={() => { setFilter(f.value); setShowFilters(false); }}
             >
@@ -336,7 +334,7 @@ export default function EditPostPage() {
                   filter: f.value === 'none' ? undefined : f.value,
                 }}
               />
-              <span>{f.name}</span>
+              <span>{t(`camera.filter_${f.nameKey}`)}</span>
             </button>
           ))}
         </div>
@@ -370,7 +368,7 @@ export default function EditPostPage() {
 
           {/* Start slider */}
           <div className={s.sliderRow}>
-            <span className={s.sliderLabel}>بداية</span>
+            <span className={s.sliderLabel}>{t('edit_post.trim_start')}</span>
             <input
               type="range"
               className={s.trimSlider}
@@ -385,7 +383,7 @@ export default function EditPostPage() {
 
           {/* End slider */}
           <div className={s.sliderRow}>
-            <span className={s.sliderLabel}>نهاية</span>
+            <span className={s.sliderLabel}>{t('edit_post.trim_end')}</span>
             <input
               type="range"
               className={s.trimSlider}
@@ -403,17 +401,17 @@ export default function EditPostPage() {
       {/* ── AI Mood card (photo only) ── */}
       {isPhoto && (aiAnalyzing || aiMood) && (
         <div className={s.aiCard}>
-          <div className={s.aiLabel}>🤖 اقتراح ذكي</div>
+          <div className={s.aiLabel}>{t('edit_post.ai_suggestion')}</div>
           {aiAnalyzing ? (
-            <div className={s.aiLoading}>جارٍ تحليل الصورة…</div>
+            <div className={s.aiLoading}>{t('edit_post.analyzing')}</div>
           ) : (
             <div className={s.aiContent}>
-              <div className={s.aiMood}>{aiMood.mood}</div>
-              <div className={s.aiGenre}>يناسبها: <strong>{aiMood.genre}</strong></div>
+              <div className={s.aiMood}>{t(`edit_post.mood_${aiMood.moodKey}`)}</div>
+              <div className={s.aiGenre}>{t('edit_post.suitable_music')} <strong>{t(`edit_post.genre_${aiMood.genreKey}`)}</strong></div>
               {!audioName ? (
                 <label className={s.aiPickBtn}>
                   <input type="file" accept="audio/*" hidden onChange={handleAudioPick} />
-                  أضف صوت مناسب ↗
+                  {t('edit_post.add_suitable_sound')}
                 </label>
               ) : (
                 <div className={s.audioSelected}>✓ {audioName.slice(0, 20)}</div>
@@ -427,7 +425,7 @@ export default function EditPostPage() {
       <div className={s.form}>
         <textarea
           className={s.caption}
-          placeholder="أضف وصفاً... #وسوم"
+          placeholder={t('edit_post.caption_placeholder')}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           maxLength={300}
@@ -435,15 +433,15 @@ export default function EditPostPage() {
         />
 
         <div className={s.field}>
-          <span className={s.fieldLabel}>الخصوصية</span>
+          <span className={s.fieldLabel}>{t('edit_post.privacy')}</span>
           <div className={s.visOpts}>
-            {VISIBILITY_OPTIONS.map((o) => (
+            {VISIBILITY_KEYS.map((k) => (
               <button
-                key={o.value}
-                className={`${s.visBtn} ${visibility === o.value ? s.visActive : ''}`}
-                onClick={() => setVisibility(o.value)}
+                key={k}
+                className={`${s.visBtn} ${visibility === k ? s.visActive : ''}`}
+                onClick={() => setVisibility(k)}
               >
-                {o.label}
+                {t(`edit_post.${k}`)}
               </button>
             ))}
           </div>
@@ -460,7 +458,7 @@ export default function EditPostPage() {
           onClick={handlePost}
           disabled={uploading || (!videoBlob && slides.length === 0)}
         >
-          {uploading ? `جاري الرفع ${uploadProgress}%` : 'نشر المنشور'}
+          {uploading ? `${t('edit_post.uploading')} ${uploadProgress}%` : t('edit_post.post_content')}
         </button>
       </div>
     </div>

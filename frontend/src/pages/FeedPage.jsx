@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import VideoItem from '../components/VideoItem';
 import s from './FeedPage.module.css';
 
-const TABS = [
-  { key: 'foryou', label: 'لك' },
-  { key: 'following', label: 'أتابعه' },
-  { key: 'saved', label: '🔖 المحفوظ' },
-];
+const ENDPOINT = {
+  foryou:    '/videos/foryou/',
+  following: '/videos/following/',
+  saved:     '/videos/saved/',
+};
 
 export default function FeedPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [tab, setTab] = useState('foryou');
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,17 +21,17 @@ export default function FeedPage() {
   const containerRef = useRef(null);
   const touchStartY = useRef(null);
 
-  const ENDPOINT = {
-    foryou: '/videos/foryou/',
-    following: '/videos/following/',
-    saved: '/videos/saved/',
-  };
+  const TABS = [
+    { key: 'foryou',    label: t('feed.for_you') },
+    { key: 'following', label: t('feed.following') },
+    { key: 'saved',     label: t('feed.saved') },
+  ];
 
-  const fetchVideos = useCallback(async (t) => {
+  const fetchVideos = useCallback(async (t_) => {
     setLoading(true);
     setCurrentIndex(0);
     try {
-      const { data } = await api.get(ENDPOINT[t]);
+      const { data } = await api.get(ENDPOINT[t_]);
       setVideos(data.results || data);
     } catch { setVideos([]); } finally { setLoading(false); }
   }, []);
@@ -69,9 +71,12 @@ export default function FeedPage() {
     });
   };
 
+  const emptyMsg = tab === 'following' ? t('feed.empty_following')
+    : tab === 'saved' ? t('feed.empty_saved')
+    : t('feed.empty');
+
   return (
     <div className={s.page}>
-      {/* Top bar */}
       <div className={s.topBar}>
         <div className={s.topLeft}>
           <button className={s.iconBtn} onClick={() => navigate('/search')}>
@@ -83,13 +88,13 @@ export default function FeedPage() {
         </div>
 
         <div className={s.tabs}>
-          {TABS.map((t) => (
+          {TABS.map((tb) => (
             <button
-              key={t.key}
-              className={`${s.tab} ${tab === t.key ? s.active : ''}`}
-              onClick={() => setTab(t.key)}
+              key={tb.key}
+              className={`${s.tab} ${tab === tb.key ? s.active : ''}`}
+              onClick={() => setTab(tb.key)}
             >
-              {t.label}
+              {tb.label}
             </button>
           ))}
         </div>
@@ -102,10 +107,7 @@ export default function FeedPage() {
       {loading ? (
         <div className={s.loading}><div className={s.spinner} /></div>
       ) : videos.length === 0 ? (
-        <div className={s.empty}>
-          {tab === 'following' ? 'تابع أشخاصاً لترى فيديوهاتهم هنا!' :
-           tab === 'saved' ? 'لم تحفظ أي فيديو بعد.' : 'لا توجد فيديوهات بعد!'}
-        </div>
+        <div className={s.empty}>{emptyMsg}</div>
       ) : (
         <div
           ref={containerRef}

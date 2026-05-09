@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import s from './LivePage.module.css';
@@ -8,6 +9,7 @@ export default function LivePage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [stream, setStream] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -78,7 +80,7 @@ export default function LivePage() {
     navigate('/');
   };
 
-  if (!stream) return <div className={s.loading}><div className={s.spinner} /></div>;
+  if (!stream) return <div className={s.loading}><div className={s.spinner} />{t('live.loading')}</div>;
 
   return (
     <div className={s.page}>
@@ -102,7 +104,7 @@ export default function LivePage() {
             <span className={s.viewerCount}>👁 {viewers}</span>
           </div>
           {isHost && (
-            <button className={s.endBtn} onClick={endStream}>End</button>
+            <button className={s.endBtn} onClick={endStream}>{t('live.end_stream')}</button>
           )}
         </div>
       </div>
@@ -123,7 +125,7 @@ export default function LivePage() {
             className={s.chatInput}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="أضف تعليقاً…"
+            placeholder={t('live.chat_placeholder')}
             maxLength={200}
           />
           <button className={s.sendBtn} type="submit">↑</button>

@@ -1,32 +1,34 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import s from './CameraPage.module.css';
 
 const DURATIONS = [
-  { label: '15ث', seconds: 15 },
-  { label: '60ث', seconds: 60 },
-  { label: '10د', seconds: 600 },
+  { labelKey: '15s', seconds: 15 },
+  { labelKey: '60s', seconds: 60 },
+  { labelKey: '10m', seconds: 600 },
 ];
 
 const CSS_FILTERS = [
-  { name: 'عادي', value: 'none' },
-  { name: 'حيوي', value: 'saturate(1.8) contrast(1.1)' },
-  { name: 'بارد', value: 'hue-rotate(200deg) saturate(1.2)' },
-  { name: 'دافئ', value: 'sepia(0.4) saturate(1.3)' },
-  { name: 'أبيض وأسود', value: 'grayscale(1)' },
-  { name: 'ناعم', value: 'brightness(1.1) contrast(0.9) saturate(0.8)' },
-  { name: 'درامي', value: 'contrast(1.4) brightness(0.9)' },
+  { nameKey: 'normal', value: 'none' },
+  { nameKey: 'vivid', value: 'saturate(1.8) contrast(1.1)' },
+  { nameKey: 'cool', value: 'hue-rotate(200deg) saturate(1.2)' },
+  { nameKey: 'warm', value: 'sepia(0.4) saturate(1.3)' },
+  { nameKey: 'bw', value: 'grayscale(1)' },
+  { nameKey: 'soft', value: 'brightness(1.1) contrast(0.9) saturate(0.8)' },
+  { nameKey: 'dramatic', value: 'contrast(1.4) brightness(0.9)' },
 ];
 
 export default function CameraPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const timerRef = useRef(null);
   const chunksRef = useRef([]);
 
-  const [mode, setMode] = useState('منشور'); // منشور | LIVE | الإبداع
+  const [mode, setMode] = useState('post'); // post | live | creative
   const [postMode, setPostMode] = useState('video'); // video | photo
   const [facing, setFacing] = useState('user'); // user | environment
   const [filter, setFilter] = useState('none');
@@ -54,7 +56,7 @@ export default function CameraPage() {
       }
       setCameraError(null);
     } catch {
-      setCameraError('تعذّر الوصول إلى الكاميرا. تأكد من منح الإذن.');
+      setCameraError(t('camera.camera_error'));
     }
   }, [facing]);
 
@@ -155,7 +157,7 @@ export default function CameraPage() {
 
   const progress = duration > 0 ? (recordingTime / duration) * 100 : 0;
 
-  if (mode === 'LIVE') {
+  if (mode === 'live') {
     navigate('/inbox');
     return null;
   }
@@ -197,7 +199,7 @@ export default function CameraPage() {
       <div className={s.topBar}>
         <button className={s.closeBtn} onClick={() => navigate(-1)}>✕</button>
         <div className={s.addSoundBtn} onClick={() => navigate('/edit-post', { state: { pickAudio: true } })}>
-          <span>🎵</span> إضافة صوت
+          {t('camera.add_sound')}
         </div>
         <div style={{ width: 40 }} />
       </div>
@@ -218,12 +220,12 @@ export default function CameraPage() {
         <div className={s.filterStrip}>
           {CSS_FILTERS.map((f) => (
             <button
-              key={f.name}
+              key={f.nameKey}
               className={`${s.filterItem} ${filter === f.value ? s.filterActive : ''}`}
               onClick={() => { setFilter(f.value); setShowFilters(false); }}
             >
               <div className={s.filterPreview} style={{ filter: f.value === 'none' ? undefined : f.value }} />
-              <span>{f.name}</span>
+              <span>{t(`camera.filter_${f.nameKey}`)}</span>
             </button>
           ))}
         </div>
@@ -240,7 +242,7 @@ export default function CameraPage() {
                 className={`${s.durBtn} ${duration === d.seconds ? s.durActive : ''}`}
                 onClick={() => setDuration(d.seconds)}
               >
-                {d.label}
+                {t(`camera.dur_${d.labelKey}`)}
               </button>
             ))}
           </div>
@@ -272,26 +274,29 @@ export default function CameraPage() {
           <div style={{ width: 56 }} />
         </div>
 
-        {/* Mode tabs: منشور / LIVE / الإبداع */}
+        {/* Mode tabs */}
         <div className={s.modeTabs}>
-          {['الإبداع', 'LIVE', 'منشور'].map((m) => (
+          {[
+            { key: 'creative', label: t('camera.creative_mode') },
+            { key: 'live',     label: t('camera.live_mode') },
+            { key: 'post',     label: t('camera.post_mode') },
+          ].map((m) => (
             <button
-              key={m}
-              className={`${s.modeTab} ${mode === m ? s.modeActive : ''}`}
+              key={m.key}
+              className={`${s.modeTab} ${mode === m.key ? s.modeActive : ''}`}
               onClick={() => {
-                if (m === 'LIVE') { navigate('/inbox'); return; }
-                setMode(m);
-                setPostMode(m === 'منشور' ? 'video' : 'photo');
+                if (m.key === 'live') { navigate('/inbox'); return; }
+                setMode(m.key);
+                setPostMode(m.key === 'post' ? 'video' : 'photo');
               }}
             >
-              {m}
+              {m.label}
             </button>
           ))}
-          {/* Photo/Video sub-toggle inside منشور */}
-          {mode === 'منشور' && (
+          {mode === 'post' && (
             <div className={s.subMode}>
-              <button className={`${s.subBtn} ${postMode === 'video' ? s.subActive : ''}`} onClick={() => setPostMode('video')}>فيديو</button>
-              <button className={`${s.subBtn} ${postMode === 'photo' ? s.subActive : ''}`} onClick={() => setPostMode('photo')}>صورة</button>
+              <button className={`${s.subBtn} ${postMode === 'video' ? s.subActive : ''}`} onClick={() => setPostMode('video')}>{t('camera.video')}</button>
+              <button className={`${s.subBtn} ${postMode === 'photo' ? s.subActive : ''}`} onClick={() => setPostMode('photo')}>{t('camera.photo')}</button>
             </div>
           )}
         </div>

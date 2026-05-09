@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import s from './SearchPage.module.css';
 
 export default function SearchPage() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [trending, setTrending] = useState([]);
@@ -50,8 +52,7 @@ export default function SearchPage() {
           className={s.input}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ابحث عن فيديوهات، #وسوم، أشخاص..."
-          dir="rtl"
+          placeholder={t('search.placeholder')}
         />
         {query && (
           <button type="button" className={s.clear} onClick={() => { setQuery(''); setResults([]); setUsers([]); }}>
@@ -64,10 +65,10 @@ export default function SearchPage() {
       {query && hasResults && (
         <div className={s.tabs}>
           <button className={`${s.tabBtn} ${tab === 'videos' ? s.tabActive : ''}`} onClick={() => setTab('videos')}>
-            فيديوهات ({results.length})
+            {t('search.videos_tab')} ({results.length})
           </button>
           <button className={`${s.tabBtn} ${tab === 'users' ? s.tabActive : ''}`} onClick={() => setTab('users')}>
-            أشخاص ({users.length})
+            {t('search.users_tab')} ({users.length})
           </button>
         </div>
       )}
@@ -110,19 +111,19 @@ export default function SearchPage() {
         )}
 
         {!loading && query && !hasResults && (
-          <p className={s.empty}>لا نتائج لـ "{query}"</p>
+          <p className={s.empty}>{t('search.no_results', { query })}</p>
         )}
 
         {!query && !loading && (
           <>
-            <h3 className={s.sectionTitle}>🔥 الأوسمة الرائجة</h3>
+            <h3 className={s.sectionTitle}>{t('search.trending')}</h3>
             <div className={s.tags}>
               {trending.map((tag) => (
                 <Link key={tag.id} to={`/hashtag/${tag.name}`} className={s.tag}>
                   <span className={s.hash}>#</span>
                   <div>
                     <div className={s.tagName}>{tag.name}</div>
-                    <div className={s.tagCount}>{fmt(tag.videos_count)} فيديو</div>
+                    <div className={s.tagCount}>{fmt(tag.videos_count)} {t('search.videos_count')}</div>
                   </div>
                 </Link>
               ))}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import s from './ProfilePage.module.css';
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
 
+  const { t } = useTranslation();
   const isMe = me?.username === target;
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function ProfilePage() {
   };
 
   const toggleBlock = async () => {
-    if (!window.confirm(profile.is_blocked ? `إلغاء حظر @${target}؟` : `حظر @${target}؟`)) return;
+    if (!window.confirm(profile.is_blocked ? t('profile.confirm_unblock', { username: target }) : t('profile.confirm_block', { username: target }))) return;
     setActionLoading(true);
     try {
       if (profile.is_blocked) {
@@ -82,7 +84,7 @@ export default function ProfilePage() {
   const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n ?? 0;
 
   if (loading) return <div className={s.loading}><div className={s.spinner} /></div>;
-  if (!profile) return <div className={s.loading}>المستخدم غير موجود.</div>;
+  if (!profile) return <div className={s.loading}>{t('common.error')}</div>;
 
   const avatarUrl = profile.avatar ||
     `https://ui-avatars.com/api/?name=${profile.username}&background=fe2c55&color=fff&size=128`;
@@ -107,9 +109,9 @@ export default function ProfilePage() {
       {showPrivacyMenu && isMe && (
         <div className={s.privacyMenu}>
           <button className={s.privacyItem} onClick={togglePrivacy}>
-            {profile.is_private ? '🔓 جعل الحساب عاماً' : '🔒 جعل الحساب خاصاً'}
+            {profile.is_private ? `🔓 ${t('settings.now_public')}` : `🔒 ${t('settings.private_account')}`}
           </button>
-          <button className={s.privacyItem} onClick={() => setShowPrivacyMenu(false)}>إلغاء</button>
+          <button className={s.privacyItem} onClick={() => setShowPrivacyMenu(false)}>{t('common.cancel')}</button>
         </div>
       )}
 
@@ -117,32 +119,32 @@ export default function ProfilePage() {
         <div className={s.topSection}>
           <img src={avatarUrl} alt="" className={s.avatar} />
           <div className={s.stats}>
-            <div className={s.stat}><strong>{fmt(profile.following_count)}</strong><span>يتابع</span></div>
-            <div className={s.stat}><strong>{fmt(profile.followers_count)}</strong><span>متابع</span></div>
-            <div className={s.stat}><strong>{fmt(profile.likes_count)}</strong><span>إعجاب</span></div>
+            <div className={s.stat}><strong>{fmt(profile.following_count)}</strong><span>{t('profile.following')}</span></div>
+            <div className={s.stat}><strong>{fmt(profile.followers_count)}</strong><span>{t('profile.followers')}</span></div>
+            <div className={s.stat}><strong>{fmt(profile.likes_count)}</strong><span>{t('profile.likes')}</span></div>
           </div>
         </div>
 
         <p className={s.displayName}>{profile.first_name || profile.username}</p>
         <p className={s.handle}>@{profile.username}</p>
         {profile.bio && <p className={s.bio}>{profile.bio}</p>}
-        {profile.is_private && <p className={s.privateNote}>🔒 حساب خاص</p>}
+        {profile.is_private && <p className={s.privateNote}>🔒 {t('profile.private_account')}</p>}
 
         {profile.is_live && (
           <Link to={`/live/${profile.username}`} className={s.liveNow}>
-            🔴 بث مباشر الآن — {profile.live_title}
+            {t('profile.live_now')} — {profile.live_title}
           </Link>
         )}
 
         <div className={s.btnRow}>
           {isMe ? (
             <>
-              <button className={s.editBtn} onClick={() => navigate('/settings')}>تعديل الملف</button>
+              <button className={s.editBtn} onClick={() => navigate('/settings')}>{t('profile.edit_profile')}</button>
               <button
                 className={s.privacyToggleBtn}
                 onClick={togglePrivacy}
               >
-                {profile.is_private ? '🔒 خاص' : '🌐 عام'}
+                {profile.is_private ? t('profile.privacy_private') : t('profile.privacy_public')}
               </button>
             </>
           ) : (
@@ -152,17 +154,17 @@ export default function ProfilePage() {
                 onClick={toggleFollow}
                 disabled={actionLoading}
               >
-                {profile.is_following ? 'يُتابَع' : 'متابعة'}
+                {profile.is_following ? t('profile.following_btn') : t('profile.follow')}
               </button>
               {profile.is_friend ? (
-                <button className={s.msgBtn} onClick={startChat}>💬 رسالة</button>
+                <button className={s.msgBtn} onClick={startChat}>{t('profile.message')}</button>
               ) : (
                 <button
                   className={s.friendBtn}
                   onClick={sendFriendRequest}
                   disabled={actionLoading || profile.friend_request_status === 'pending'}
                 >
-                  {profile.friend_request_status === 'pending' ? '⏳ بانتظار' : '🤝 صديق'}
+                  {profile.friend_request_status === 'pending' ? t('profile.pending') : t('profile.add_friend')}
                 </button>
               )}
               <button className={s.blockBtn} onClick={toggleBlock} disabled={actionLoading}>
@@ -176,15 +178,15 @@ export default function ProfilePage() {
         {isPrivateLocked ? (
           <div className={s.privateLocked}>
             <p style={{ fontSize: '2rem' }}>🔒</p>
-            <p>هذا الحساب خاص</p>
-            <p style={{ fontSize: '.82rem', color: '#555' }}>تابع هذا الشخص لترى محتواه</p>
+            <p>{t('profile.private_locked_title')}</p>
+            <p style={{ fontSize: '.82rem', color: '#555' }}>{t('profile.private_locked_sub')}</p>
           </div>
         ) : (
           <div className={s.grid}>
             {profile.is_blocked ? (
-              <p className={s.blocked}>لقد حظرت هذا المستخدم.</p>
+              <p className={s.blocked}>{t('profile.blocked_user')}</p>
             ) : videos.length === 0 ? (
-              <p className={s.noVideos}>لا توجد فيديوهات بعد.</p>
+              <p className={s.noVideos}>{t('profile.no_videos')}</p>
             ) : (
               videos.map((v) => (
                 <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>

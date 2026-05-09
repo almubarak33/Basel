@@ -1,17 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import CommentsDrawer from './CommentsDrawer';
 import s from './VideoItem.module.css';
-
-const REPORT_REASONS = [
-  { key: 'nsfw', label: '🔞 محتوى جنسي' },
-  { key: 'violence', label: '⚠️ عنف' },
-  { key: 'harassment', label: '🚫 تحرش' },
-  { key: 'spam', label: '📢 سبام' },
-  { key: 'other', label: '❓ أخرى' },
-];
 
 function renderCaption(caption) {
   if (!caption) return null;
@@ -25,6 +18,7 @@ function renderCaption(caption) {
 export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const videoRef = useRef(null);
   const [paused, setPaused] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -55,7 +49,6 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
     }
   }, [isActive, isRestricted]);
 
-  // Auto-advance photo carousel every 3s when active and has audio
   useEffect(() => {
     if (!isPhoto || !isActive || !video.audio_file || slides.length < 2) return;
     const id = setInterval(() => {
@@ -121,7 +114,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('حذف هذا الفيديو؟')) return;
+    if (!window.confirm(t('video_item.confirm_delete'))) return;
     await api.delete(`/videos/${video.id}/`);
     onDelete(video.id);
   };
@@ -142,7 +135,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert('فشل التحميل. حاول مجدداً.');
+      alert(t('video_item.download_failed'));
     } finally {
       setDownloading(false);
     }
@@ -153,7 +146,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
     try {
       await api.post(`/videos/${video.id}/report/`, { reason });
       setReported(true);
-    } catch { /* already reported */ }
+    } catch {}
   };
 
   const avatarUrl = video.author.avatar ||
@@ -166,15 +159,23 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
     return String(n);
   };
 
+  const REPORT_REASONS = [
+    { key: 'nsfw',       label: t('video_item.report_nsfw') },
+    { key: 'violence',   label: t('video_item.report_violence') },
+    { key: 'harassment', label: t('video_item.report_harassment') },
+    { key: 'spam',       label: t('video_item.report_spam') },
+    { key: 'other',      label: t('video_item.report_other') },
+  ];
+
   return (
     <div className={s.item}>
       {/* Age-restriction gate */}
       {isRestricted && (
         <div className={s.ageGate}>
           <span className={s.ageGateIcon}>🔞</span>
-          <p className={s.ageGateText}>هذا المحتوى مقيد للبالغين فقط</p>
+          <p className={s.ageGateText}>{t('video_item.age_restricted')}</p>
           <button className={s.ageGateBtn} onClick={() => setAgeConfirmed(true)}>
-            تأكيد — عمري +18
+            {t('video_item.confirm_age')}
           </button>
         </div>
       )}
@@ -186,7 +187,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
       {/* Report menu */}
       {showReport && (
         <div className={s.reportMenu}>
-          <p style={{ color: '#888', fontSize: '.72rem', marginBottom: 2 }}>الإبلاغ عن المحتوى</p>
+          <p style={{ color: '#888', fontSize: '.72rem', marginBottom: 2 }}>{t('video_item.report_title')}</p>
           {REPORT_REASONS.map((r) => (
             <button
               key={r.key}
@@ -196,7 +197,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
               {r.label}
             </button>
           ))}
-          <button className={s.reportOption} onClick={() => setShowReport(false)}>إلغاء</button>
+          <button className={s.reportOption} onClick={() => setShowReport(false)}>{t('video_item.cancel')}</button>
         </div>
       )}
 
@@ -209,14 +210,9 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
           onClick={handleDoubleTap}
         >
           {slides.length > 0 ? (
-            <img
-              src={slides[slideIndex]?.image}
-              alt=""
-              className={s.carouselImg}
-              draggable={false}
-            />
+            <img src={slides[slideIndex]?.image} alt="" className={s.carouselImg} draggable={false} />
           ) : (
-            <div className={s.noMedia}>لا توجد صور</div>
+            <div className={s.noMedia}>{t('edit_post.no_media')}</div>
           )}
           {slides.length > 1 && (
             <div className={s.carouselDots}>
@@ -270,7 +266,7 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
             <FollowBtn authorUsername={video.author.username} />
           )}
           {user?.username === video.author.username && (
-            <button className={s.deleteBtn} onClick={handleDelete}>حذف</button>
+            <button className={s.deleteBtn} onClick={handleDelete}>{t('video_item.delete')}</button>
           )}
         </div>
 
@@ -278,11 +274,10 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
           <p className={s.caption}>{renderCaption(video.caption)}</p>
         )}
 
-        {/* Music bar */}
         {video.audio_file && (
           <div className={s.musicBar}>
             <span className={s.musicNote}>♪</span>
-            <span className={s.musicText}>موسيقى مضافة</span>
+            <span className={s.musicText}>{t('video_item.music_added')}</span>
           </div>
         )}
 
@@ -291,9 +286,8 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
         </div>
       </div>
 
-      {/* Right actions — matching TikTok layout */}
+      {/* Right actions */}
       <div className={s.actions}>
-        {/* Avatar */}
         <div className={s.avatarAction}>
           <img
             src={avatarUrl}
@@ -306,31 +300,10 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
           )}
         </div>
 
-        {/* Like */}
-        <ActionBtn
-          icon={video.is_liked ? '❤️' : '🤍'}
-          count={fmt(video.likes_count)}
-          active={video.is_liked}
-          onClick={handleLike}
-          activeClass={s.liked}
-        />
+        <ActionBtn icon={video.is_liked ? '❤️' : '🤍'} count={fmt(video.likes_count)} active={video.is_liked} onClick={handleLike} activeClass={s.liked} />
+        <ActionBtn icon="💬" count={fmt(video.comments_count)} onClick={() => setShowComments(true)} />
+        <ActionBtn icon={video.is_saved ? '🔖' : '🏷️'} count={fmt(video.saves_count)} active={video.is_saved} onClick={handleSave} />
 
-        {/* Comment */}
-        <ActionBtn
-          icon="💬"
-          count={fmt(video.comments_count)}
-          onClick={() => setShowComments(true)}
-        />
-
-        {/* Save / Bookmark */}
-        <ActionBtn
-          icon={video.is_saved ? '🔖' : '🏷️'}
-          count={fmt(video.saves_count)}
-          active={video.is_saved}
-          onClick={handleSave}
-        />
-
-        {/* Share / Repost */}
         <ActionBtn
           icon={video.is_reposted ? '🔁' : '↗️'}
           count={fmt(video.reposts_count)}
@@ -348,26 +321,19 @@ export default function VideoItem({ video, isActive, onUpdate, onDelete, onNext 
           }}
         />
 
-        {/* Download */}
-        <ActionBtn
-          icon={downloading ? '⏳' : '⬇️'}
-          count="حفظ"
-          onClick={handleDownload}
-        />
+        <ActionBtn icon={downloading ? '⏳' : '⬇️'} count={t('video_item.download')} onClick={handleDownload} />
 
-        {/* Report (other users' videos) */}
         {user?.username !== video.author.username && (
           <ActionBtn
             icon={reported ? '✅' : '🚩'}
-            count={reported ? 'أُبلغ' : 'بلاغ'}
+            count={reported ? t('video_item.reported') : t('video_item.report')}
             onClick={() => !reported && setShowReport((v) => !v)}
           />
         )}
 
-        {/* Next */}
         <button className={s.actionBtn} onClick={onNext}>
           <span style={{ fontSize: '1.4rem' }}>⬇</span>
-          <span className={s.actionLabel}>التالي</span>
+          <span className={s.actionLabel}>{t('video_item.next')}</span>
         </button>
       </div>
 
@@ -392,6 +358,7 @@ function ActionBtn({ icon, count, onClick, active, activeClass }) {
 }
 
 function FollowBtn({ authorUsername }) {
+  const { t } = useTranslation();
   const [following, setFollowing] = useState(false);
   const toggle = async () => {
     try {
@@ -402,11 +369,11 @@ function FollowBtn({ authorUsername }) {
         await api.post(`/users/${authorUsername}/follow/`);
         setFollowing(true);
       }
-    } catch { /* ignore */ }
+    } catch {}
   };
   return (
     <button className={`${s.followBtn} ${following ? s.following : ''}`} onClick={toggle}>
-      {following ? 'يُتابَع' : '+ تابع'}
+      {following ? t('video_item.following') : t('video_item.follow')}
     </button>
   );
 }
@@ -422,7 +389,7 @@ function FollowDot({ authorUsername }) {
         await api.post(`/users/${authorUsername}/follow/`);
         setFollowing(true);
       }
-    } catch { /* ignore */ }
+    } catch {}
   };
   return (
     <button className={`${s.followDot} ${following ? s.followDotActive : ''}`} onClick={toggle}>

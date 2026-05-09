@@ -1,13 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import s from './SettingsPage.module.css';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuth();
 
+  const { t } = useTranslation();
   const [tab, setTab] = useState('profile'); // profile | account | privacy
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -50,9 +53,9 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       updateUser(data);
-      flash('تم حفظ الملف الشخصي ✓');
+      flash(t('settings.profile_saved'));
     } catch {
-      flash('فشل الحفظ. حاول مجدداً.', true);
+      flash(t('settings.save_failed'), true);
     } finally {
       setSaving(false);
     }
@@ -60,15 +63,15 @@ export default function SettingsPage() {
 
   const changePassword = async (e) => {
     e.preventDefault();
-    if (newPass !== confirmPass) { flash('كلمتا المرور الجديدتان غير متطابقتين.', true); return; }
-    if (newPass.length < 8) { flash('كلمة المرور يجب أن تكون 8 أحرف على الأقل.', true); return; }
+    if (newPass !== confirmPass) { flash(t('settings.password_mismatch'), true); return; }
+    if (newPass.length < 8) { flash(t('settings.password_too_short'), true); return; }
     setSaving(true);
     try {
       await api.post('/auth/change-password/', { old_password: oldPass, new_password: newPass });
       setOldPass(''); setNewPass(''); setConfirmPass('');
-      flash('تم تغيير كلمة المرور ✓');
+      flash(t('settings.password_changed'));
     } catch (err) {
-      flash(err.response?.data?.error || 'كلمة المرور الحالية غير صحيحة.', true);
+      flash(err.response?.data?.error || t('settings.password_wrong'), true);
     } finally {
       setSaving(false);
     }
@@ -79,21 +82,21 @@ export default function SettingsPage() {
     try {
       const { data } = await api.patch('/auth/me/', { is_private: newVal });
       updateUser(data);
-      flash(newVal ? 'أصبح حسابك خاصاً 🔒' : 'أصبح حسابك عاماً 🌐');
+      flash(newVal ? t('settings.now_private') : t('settings.now_public'));
     } catch {
-      flash('فشل التحديث.', true);
+      flash(t('settings.update_failed'), true);
     }
   };
 
   const deleteAccount = async () => {
-    if (!window.confirm('هل أنت متأكد من حذف حسابك نهائياً؟ لا يمكن التراجع.')) return;
-    if (!window.confirm('آخر تأكيد — سيتم حذف كل بياناتك.')) return;
+    if (!window.confirm(t('settings.confirm_delete_1'))) return;
+    if (!window.confirm(t('settings.confirm_delete_2'))) return;
     try {
       await api.delete('/auth/me/');
       logout();
       navigate('/login');
     } catch {
-      flash('فشل الحذف. حاول مجدداً.', true);
+      flash(t('settings.delete_failed'), true);
     }
   };
 
@@ -104,7 +107,7 @@ export default function SettingsPage() {
     <div className={s.page}>
       <div className={s.header}>
         <button className={s.back} onClick={() => navigate(-1)}>←</button>
-        <span className={s.title}>الإعدادات</span>
+        <span className={s.title}>{t('settings.title')}</span>
         <div style={{ width: 32 }} />
       </div>
 
@@ -114,9 +117,9 @@ export default function SettingsPage() {
 
       {/* Tabs */}
       <div className={s.tabs}>
-        <button className={`${s.tab} ${tab === 'profile' ? s.tabActive : ''}`} onClick={() => setTab('profile')}>الملف</button>
-        <button className={`${s.tab} ${tab === 'account' ? s.tabActive : ''}`} onClick={() => setTab('account')}>الحساب</button>
-        <button className={`${s.tab} ${tab === 'privacy' ? s.tabActive : ''}`} onClick={() => setTab('privacy')}>الخصوصية</button>
+        <button className={`${s.tab} ${tab === 'profile' ? s.tabActive : ''}`} onClick={() => setTab('profile')}>{t('settings.profile_tab')}</button>
+        <button className={`${s.tab} ${tab === 'account' ? s.tabActive : ''}`} onClick={() => setTab('account')}>{t('settings.account_tab')}</button>
+        <button className={`${s.tab} ${tab === 'privacy' ? s.tabActive : ''}`} onClick={() => setTab('privacy')}>{t('settings.privacy_tab')}</button>
       </div>
 
       <div className={s.body}>
@@ -126,28 +129,28 @@ export default function SettingsPage() {
             {/* Avatar */}
             <div className={s.avatarSection} onClick={() => avatarRef.current?.click()}>
               <img src={avatarUrl} alt="" className={s.avatar} />
-              <div className={s.avatarOverlay}>📷 تغيير</div>
+              <div className={s.avatarOverlay}>{t('settings.change_photo')}</div>
               <input ref={avatarRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
             </div>
 
             <div className={s.field}>
-              <label className={s.label}>الاسم الظاهر</label>
+              <label className={s.label}>{t('settings.display_name')}</label>
               <input
                 className={s.input}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="اسمك الكامل"
+                placeholder={t('settings.display_name_placeholder')}
                 maxLength={50}
               />
             </div>
 
             <div className={s.field}>
-              <label className={s.label}>السيرة الذاتية</label>
+              <label className={s.label}>{t('settings.bio')}</label>
               <textarea
                 className={s.textarea}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="أخبر العالم عن نفسك..."
+                placeholder={t('settings.bio_placeholder')}
                 maxLength={150}
                 rows={3}
               />
@@ -155,18 +158,18 @@ export default function SettingsPage() {
             </div>
 
             <div className={s.field}>
-              <label className={s.label}>اسم المستخدم</label>
+              <label className={s.label}>{t('settings.username')}</label>
               <div className={s.readOnly}>@{user?.username}</div>
-              <span className={s.hint}>لتغيير اسم المستخدم تواصل مع الدعم</span>
+              <span className={s.hint}>{t('settings.username_change_hint')}</span>
             </div>
 
             <div className={s.field}>
-              <label className={s.label}>البريد الإلكتروني</label>
+              <label className={s.label}>{t('settings.email')}</label>
               <div className={s.readOnly}>{user?.email}</div>
             </div>
 
             <button className={s.saveBtn} type="submit" disabled={saving}>
-              {saving ? 'جاري الحفظ…' : 'حفظ التغييرات'}
+              {saving ? t('settings.saving') : t('settings.save_changes')}
             </button>
           </form>
         )}
@@ -174,10 +177,10 @@ export default function SettingsPage() {
         {/* ── ACCOUNT TAB ── */}
         {tab === 'account' && (
           <div className={s.form}>
-            <h3 className={s.sectionTitle}>تغيير كلمة المرور</h3>
+            <h3 className={s.sectionTitle}>{t('settings.change_password')}</h3>
             <form onSubmit={changePassword}>
               <div className={s.field}>
-                <label className={s.label}>كلمة المرور الحالية</label>
+                <label className={s.label}>{t('settings.current_password')}</label>
                 <input
                   className={s.input}
                   type="password"
@@ -188,19 +191,19 @@ export default function SettingsPage() {
                 />
               </div>
               <div className={s.field}>
-                <label className={s.label}>كلمة المرور الجديدة</label>
+                <label className={s.label}>{t('settings.new_password')}</label>
                 <input
                   className={s.input}
                   type="password"
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
-                  placeholder="8 أحرف على الأقل"
+                  placeholder={t('settings.new_password_placeholder')}
                   minLength={8}
                   required
                 />
               </div>
               <div className={s.field}>
-                <label className={s.label}>تأكيد كلمة المرور الجديدة</label>
+                <label className={s.label}>{t('settings.confirm_new_password')}</label>
                 <input
                   className={s.input}
                   type="password"
@@ -211,23 +214,23 @@ export default function SettingsPage() {
                 />
               </div>
               <button className={s.saveBtn} type="submit" disabled={saving}>
-                {saving ? 'جاري التغيير…' : 'تغيير كلمة المرور'}
+                {saving ? t('settings.changing') : t('settings.change_password')}
               </button>
             </form>
 
             <div className={s.divider} />
 
-            <h3 className={s.sectionTitle}>تسجيل الخروج</h3>
+            <h3 className={s.sectionTitle}>{t('settings.logout')}</h3>
             <button className={s.logoutBtn} onClick={() => { logout(); navigate('/login'); }}>
-              تسجيل الخروج
+              {t('settings.logout')}
             </button>
 
             <div className={s.divider} />
 
-            <h3 className={s.sectionTitle} style={{ color: '#ff4444' }}>منطقة الخطر</h3>
-            <p className={s.dangerText}>حذف الحساب نهائي ولا يمكن التراجع عنه.</p>
+            <h3 className={s.sectionTitle} style={{ color: '#ff4444' }}>{t('settings.danger_zone')}</h3>
+            <p className={s.dangerText}>{t('settings.delete_warning')}</p>
             <button className={s.deleteBtn} onClick={deleteAccount}>
-              حذف حسابي نهائياً
+              {t('settings.delete_account')}
             </button>
           </div>
         )}
@@ -235,15 +238,15 @@ export default function SettingsPage() {
         {/* ── PRIVACY TAB ── */}
         {tab === 'privacy' && (
           <div className={s.form}>
-            <h3 className={s.sectionTitle}>خصوصية الحساب</h3>
+            <h3 className={s.sectionTitle}>{t('settings.private_account')}</h3>
 
             <div className={s.toggleRow}>
               <div>
-                <div className={s.toggleLabel}>حساب خاص</div>
+                <div className={s.toggleLabel}>{t('settings.private_account')}</div>
                 <div className={s.toggleDesc}>
                   {user?.is_private
-                    ? 'فقط متابعوك يرون منشوراتك'
-                    : 'منشوراتك مرئية للجميع'}
+                    ? t('settings.private_account_desc_on')
+                    : t('settings.private_account_desc_off')}
                 </div>
               </div>
               <button
@@ -255,26 +258,30 @@ export default function SettingsPage() {
             </div>
 
             <div className={s.infoBox}>
-              <p>🔒 <strong>خاص:</strong> يجب أن يتابعك الشخص لرؤية فيديوهاتك</p>
-              <p>🌐 <strong>عام:</strong> أي شخص يمكنه مشاهدة محتواك</p>
+              <p>{t('settings.private_desc')}</p>
+              <p>{t('settings.public_desc')}</p>
             </div>
 
             <div className={s.divider} />
 
-            <h3 className={s.sectionTitle}>إعدادات التفاعل</h3>
+            <h3 className={s.sectionTitle}>{t('settings.interaction_settings')}</h3>
 
             <div className={s.staticRow}>
-              <span>إمكانية التعليق على منشوراتك</span>
-              <span className={s.staticBadge}>الكل</span>
+              <span>{t('settings.comments_setting')}</span>
+              <span className={s.staticBadge}>{t('settings.all')}</span>
             </div>
             <div className={s.staticRow}>
-              <span>إمكانية مشاركة منشوراتك</span>
-              <span className={s.staticBadge}>الكل</span>
+              <span>{t('settings.share_setting')}</span>
+              <span className={s.staticBadge}>{t('settings.all')}</span>
             </div>
             <div className={s.staticRow}>
-              <span>إمكانية مراسلتك</span>
-              <span className={s.staticBadge}>الأصدقاء</span>
+              <span>{t('settings.message_setting')}</span>
+              <span className={s.staticBadge}>{t('settings.friends_only')}</span>
             </div>
+
+            <div className={s.divider} />
+            <h3 className={s.sectionTitle}>{t('settings.language')}</h3>
+            <LanguageSwitcher />
           </div>
         )}
       </div>
