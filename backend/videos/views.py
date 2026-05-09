@@ -1,7 +1,11 @@
+import logging
 import os
 import random
+import shutil
 import subprocess
 import tempfile
+
+logger = logging.getLogger(__name__)
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -157,41 +161,124 @@ class VideoUploadView(generics.CreateAPIView):
             for i, img in enumerate(slides):
                 PhotoSlide.objects.create(post=video, image=img, order=i)
         else:
-            # Apply trim before audio merge
+            # Trim before audio merge so duration is correct when merging
             try:
-                trim_start = float(self.request.data.get('trim_start', 0) or 0)
-                trim_end   = float(self.request.data.get('trim_end',   0) or 0)
-                if trim_end > trim_start > 0 or (trim_end > 0 and trim_start == 0):
-                    self._trim_video(video, trim_start, trim_end)
+                trim_start = float(self.request.data.get('trim_start') or 0)
+                trim_end   = float(self.request.data.get('trim_end')   or 0)
             except (TypeError, ValueError):
-                pass
+                trim_start = trim_end = 0.0
+
+            if trim_end > 0 and trim_end > trim_start:
+                self._trim_video(video, trim_start, trim_end)
 
             audio = self.request.FILES.get('audio_file')
             if audio:
                 self._merge_audio(video, audio)
 
-    def _trim_video(self, video, start, end):
-        """Trim video to [start, end] seconds using ffmpeg."""
+    # ── helpers ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _probe_duration(path: str):
+        """Return duration in seconds via ffprobe, or None on any failure."""
+        try:
+            result = subprocess.run(
+                [
+                    'ffprobe', '-v', 'error',
+                    '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1',
+                    path,
+                ],
+                capture_output=True, text=True, timeout=30,
+            )
+            if result.returncode == 0:
+                return float(result.stdout.strip())
+        except Exception:
+            pass
+        return None
+
+    def _trim_video(self, video, start: float, end: float) -> bool:
+        """
+        Re-encode video to the exact [start, end] range and replace the
+        original file.  Returns True on success, False if skipped/failed
+        (original file is preserved in all failure cases).
+        """
         video_path = video.video_file.path
         if not os.path.exists(video_path):
-            return
-        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp:
-            out_path = tmp.name
+            return False
+
+        # Sanitise inputs
+        start = max(0.0, round(start, 3))
+        end   = round(end, 3)
+        if end <= start:
+            return False
+
+        # Clamp end to actual file duration so we don't request beyond EOF
+        actual = self._probe_duration(video_path)
+        if actual is not None:
+            end = min(end, round(actual, 3))
+            if end <= start:
+                return False
+
+        out_path = None
         try:
-            subprocess.run([
-                'ffmpeg', '-y',
-                '-ss', str(start),
-                '-to', str(end),
-                '-i', video_path,
-                '-c', 'copy',
-                out_path,
-            ], check=True, capture_output=True, timeout=120)
-            import shutil
-            shutil.copy2(out_path, video_path)
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            pass
+            fd, out_path = tempfile.mkstemp(suffix='.mp4')
+            os.close(fd)
+
+            result = subprocess.run(
+                [
+                    'ffmpeg', '-y',
+                    '-i', video_path,
+                    # Output-side -ss/-to gives frame-accurate cuts via re-encode
+                    '-ss', f'{start:.3f}',
+                    '-to', f'{end:.3f}',
+                    '-c:v', 'libx264',
+                    '-preset', 'fast',
+                    '-crf', '23',
+                    '-c:a', 'aac',
+                    '-b:a', '128k',
+                    '-avoid_negative_ts', 'make_zero',
+                    '-movflags', '+faststart',
+                    out_path,
+                ],
+                capture_output=True,
+                timeout=300,
+            )
+
+            if result.returncode != 0:
+                logger.warning(
+                    'ffmpeg trim failed for video %s (rc=%d): %s',
+                    video.pk,
+                    result.returncode,
+                    result.stderr.decode('utf-8', errors='replace')[-600:],
+                )
+                return False
+
+            # Sanity-check the output before replacing the original
+            if os.path.getsize(out_path) < 1024:
+                logger.warning('ffmpeg trim produced empty output for video %s', video.pk)
+                return False
+
+            trimmed_dur = self._probe_duration(out_path)
+            expected    = end - start
+            if trimmed_dur is not None and abs(trimmed_dur - expected) > 2.0:
+                logger.warning(
+                    'Trim duration mismatch for video %s: expected %.2fs got %.2fs',
+                    video.pk, expected, trimmed_dur,
+                )
+                # Still use the output — ffmpeg succeeded; log only for diagnostics
+
+            shutil.move(out_path, video_path)
+            out_path = None  # ownership transferred; skip cleanup
+            return True
+
+        except subprocess.TimeoutExpired:
+            logger.warning('ffmpeg trim timed out for video %s', video.pk)
+            return False
+        except Exception:
+            logger.exception('Unexpected error trimming video %s', video.pk)
+            return False
         finally:
-            if os.path.exists(out_path):
+            if out_path and os.path.exists(out_path):
                 os.unlink(out_path)
 
     def _merge_audio(self, video, audio_file):
@@ -207,21 +294,34 @@ class VideoUploadView(generics.CreateAPIView):
             out_path = tmp_out.name
 
         try:
-            subprocess.run([
-                'ffmpeg', '-y',
-                '-i', video_path,
-                '-i', audio_path,
-                '-c:v', 'copy', '-c:a', 'aac',
-                '-map', '0:v:0', '-map', '1:a:0',
-                '-shortest', out_path,
-            ], check=True, capture_output=True)
-            import shutil
-            shutil.copy2(out_path, video_path)
-        except subprocess.CalledProcessError:
-            pass  # keep original video if merge fails
+            result = subprocess.run(
+                [
+                    'ffmpeg', '-y',
+                    '-i', video_path,
+                    '-i', audio_path,
+                    '-c:v', 'copy', '-c:a', 'aac',
+                    '-map', '0:v:0', '-map', '1:a:0',
+                    '-shortest',
+                    '-movflags', '+faststart',
+                    out_path,
+                ],
+                capture_output=True,
+                timeout=300,
+            )
+            if result.returncode == 0 and os.path.getsize(out_path) > 1024:
+                shutil.move(out_path, video_path)
+                out_path = None
+            else:
+                logger.warning(
+                    'ffmpeg audio merge failed for video %s (rc=%d)',
+                    video.pk, result.returncode,
+                )
+        except Exception:
+            logger.exception('Audio merge error for video %s', video.pk)
         finally:
-            os.unlink(audio_path)
-            if os.path.exists(out_path):
+            if os.path.exists(audio_path):
+                os.unlink(audio_path)
+            if out_path and os.path.exists(out_path):
                 os.unlink(out_path)
 
 
