@@ -6,6 +6,7 @@ class Notification(models.Model):
     TYPES = [
         ('like', 'Like'),
         ('comment', 'Comment'),
+        ('reply', 'Reply'),
         ('follow', 'Follow'),
         ('friend_request', 'Friend Request'),
         ('friend_accept', 'Friend Accept'),

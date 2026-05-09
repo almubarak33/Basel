@@ -34,7 +34,7 @@ export default function InboxPage() {
   };
 
   const NOTIF_ICON = {
-    like: '❤️', comment: '💬', follow: '👤',
+    like: '❤️', comment: '💬', reply: '↩️', follow: '👤',
     friend_request: '🤝', friend_accept: '✅',
     repost: '🔁', message: '💌',
   };

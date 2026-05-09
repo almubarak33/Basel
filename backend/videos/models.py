@@ -83,6 +83,7 @@ class VideoLike(models.Model):
 class VideoComment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='video_comments')
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='comments')
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     content = models.TextField(max_length=300)
     created_at = models.DateTimeField(auto_now_add=True)
 

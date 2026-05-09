@@ -234,7 +234,9 @@
     "title_plural": "تعليقات",
     "no_comments": "لا توجد تعليقات. كن أول من يعلق!",
     "placeholder": "أضف تعليقاً…",
-    "post": "نشر"
+    "post": "نشر",
+    "reply": "رد",
+    "replying_to": "ردًا على"
   },
 
   "choose_username": {

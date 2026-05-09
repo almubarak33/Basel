@@ -234,7 +234,9 @@
     "title_plural": "comments",
     "no_comments": "No comments yet. Be the first!",
     "placeholder": "Add a comment…",
-    "post": "Post"
+    "post": "Post",
+    "reply": "Reply",
+    "replying_to": "Replying to"
   },
 
   "choose_username": {

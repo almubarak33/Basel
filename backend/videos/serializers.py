@@ -22,6 +22,23 @@ class HashtagSerializer(serializers.ModelSerializer):
 
 class VideoCommentSerializer(serializers.ModelSerializer):
     author = UserMiniSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VideoComment
+        fields = ('id', 'author', 'content', 'created_at', 'replies')
+        read_only_fields = ('id', 'author', 'created_at', 'replies')
+
+    def get_replies(self, obj):
+        if obj.parent_id is not None:
+            return []
+        qs = obj.replies.select_related('author').order_by('created_at')
+        return VideoCommentReplySerializer(qs, many=True, context=self.context).data
+
+
+class VideoCommentReplySerializer(serializers.ModelSerializer):
+    """Flat serializer for replies — no nested replies field to avoid recursion."""
+    author = UserMiniSerializer(read_only=True)
 
     class Meta:
         model = VideoComment

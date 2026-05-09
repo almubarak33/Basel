@@ -422,13 +422,35 @@ class VideoCommentListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return VideoComment.objects.filter(video_id=self.kwargs['pk'])
+        return (
+            VideoComment.objects
+            .filter(video_id=self.kwargs['pk'], parent__isnull=True)
+            .select_related('author')
+            .prefetch_related('replies__author')
+        )
 
     def perform_create(self, serializer):
         video = get_object_or_404(Video, pk=self.kwargs['pk'])
-        comment = serializer.save(author=self.request.user, video=video)
-        _notify(video.author, self.request.user, 'comment',
-                f'@{self.request.user.username} commented on your video.', video=video)
+        parent_id = self.request.data.get('parent')
+        parent = None
+        if parent_id:
+            # Only allow replying to top-level comments on the same video
+            parent = get_object_or_404(VideoComment, pk=parent_id, video=video, parent__isnull=True)
+
+        comment = serializer.save(author=self.request.user, video=video, parent=parent)
+
+        if parent:
+            _notify(
+                parent.author, self.request.user, 'reply',
+                f'@{self.request.user.username} replied to your comment.',
+                video=video,
+            )
+        else:
+            _notify(
+                video.author, self.request.user, 'comment',
+                f'@{self.request.user.username} commented on your video.',
+                video=video,
+            )
 
 
 @api_view(['POST'])
