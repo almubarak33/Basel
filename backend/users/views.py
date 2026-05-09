@@ -62,7 +62,7 @@ def check_username(request):
     if not username:
         return Response({'available': False, 'error': 'اسم المستخدم مطلوب.'})
     if len(username) < 3:
-        return Response({'available': False, 'error': 'يجب أن يكون 3 أحرف على الأقل.'})
+        return Response({'available': False, 'error': f'اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل (المُدخَل: {len(username)} حرف فقط).'})
     if len(username) > 30:
         return Response({'available': False, 'error': 'الحد الأقصى 30 حرفاً.'})
     import re
@@ -80,8 +80,10 @@ def set_username(request):
     if not username:
         return Response({'error': 'اسم المستخدم مطلوب.'}, status=400)
     import re
+    if len(username) < 3:
+        return Response({'error': 'اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل.'}, status=400)
     if not re.match(r'^[a-zA-Z0-9_.]{3,30}$', username):
-        return Response({'error': 'اسم غير صالح.'}, status=400)
+        return Response({'error': 'أحرف إنجليزية وأرقام و _ و . فقط.'}, status=400)
     if User.objects.filter(username__iexact=username).exclude(pk=request.user.pk).exists():
         return Response({'error': 'هذا الاسم مأخوذ.'}, status=400)
     User.objects.filter(pk=request.user.pk).update(username=username, username_is_set=True)

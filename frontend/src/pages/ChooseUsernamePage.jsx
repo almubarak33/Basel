@@ -13,7 +13,6 @@ export default function ChooseUsernamePage() {
   const [saving, setSaving] = useState(false);
 
   const checkAvailability = useCallback(async (val) => {
-    if (val.length < 3) { setStatus(null); return; }
     setStatus('checking');
     try {
       const { data } = await api.get(`/auth/check-username/?username=${encodeURIComponent(val)}`);
@@ -27,6 +26,12 @@ export default function ChooseUsernamePage() {
   // Debounce the availability check
   useEffect(() => {
     if (!username) { setStatus(null); setError(''); return; }
+    if (username.length < 3) {
+      setStatus('invalid');
+      setError('اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل.');
+      return;
+    }
+    setError('');
     const t = setTimeout(() => checkAvailability(username), 500);
     return () => clearTimeout(t);
   }, [username, checkAvailability]);
