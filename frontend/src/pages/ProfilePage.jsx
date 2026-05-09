@@ -7,18 +7,16 @@ import s from './ProfilePage.module.css';
 
 export default function ProfilePage() {
   const { username } = useParams();
-  const { user: me, updateUser } = useAuth();
+  const { user: me } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const target = username || me?.username;
+  const isMe = me?.username === target;
 
   const [profile, setProfile] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
-
-  const { t } = useTranslation();
-  const isMe = me?.username === target;
 
   useEffect(() => {
     if (!target) return;
@@ -60,7 +58,10 @@ export default function ProfilePage() {
   };
 
   const toggleBlock = async () => {
-    if (!window.confirm(profile.is_blocked ? t('profile.confirm_unblock', { username: target }) : t('profile.confirm_block', { username: target }))) return;
+    const msg = profile.is_blocked
+      ? t('profile.confirm_unblock', { username: target })
+      : t('profile.confirm_block', { username: target });
+    if (!window.confirm(msg)) return;
     setActionLoading(true);
     try {
       if (profile.is_blocked) {
@@ -78,72 +79,90 @@ export default function ProfilePage() {
     const newVal = !profile.is_private;
     await api.patch('/auth/me/', { is_private: newVal });
     setProfile((p) => ({ ...p, is_private: newVal }));
-    setShowPrivacyMenu(false);
   };
 
-  const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n ?? 0;
+  const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : (n ?? 0);
 
-  if (loading) return <div className={s.loading}><div className={s.spinner} /></div>;
-  if (!profile) return <div className={s.loading}>{t('common.error')}</div>;
+  if (loading) return (
+    <div className={s.loadingScreen}>
+      <div className={s.spinner} />
+    </div>
+  );
+  if (!profile) return <div className={s.loadingScreen}>{t('common.error')}</div>;
 
   const avatarUrl = profile.avatar ||
-    `https://ui-avatars.com/api/?name=${profile.username}&background=fe2c55&color=fff&size=128`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username)}&background=ff3366&color=fff&size=160`;
 
   const isPrivateLocked = profile.is_private && !isMe && !profile.is_friend && !profile.is_following;
 
   return (
     <div className={s.page}>
+      {/* Header bar */}
       <div className={s.header}>
-        <button className={s.back} onClick={() => navigate(-1)}>←</button>
-        <span className={s.headerName}>
-          @{profile.username}
-          {profile.is_private && <span className={s.privateBadge}> 🔒</span>}
-        </span>
-        {isMe && (
-          <button className={s.settingsBtn} onClick={() => setShowPrivacyMenu((v) => !v)}>⚙️</button>
-        )}
-        {!isMe && <div style={{ width: 32 }} />}
+        <button className={s.back} onClick={() => navigate(-1)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" width="20" height="20">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span className={s.headerHandle}>@{profile.username}</span>
+        {isMe ? (
+          <button className={s.settingsBtn} onClick={() => navigate('/settings')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" width="20" height="20">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+        ) : <div style={{ width: 34 }} />}
       </div>
 
-      {/* Privacy menu */}
-      {showPrivacyMenu && isMe && (
-        <div className={s.privacyMenu}>
-          <button className={s.privacyItem} onClick={togglePrivacy}>
-            {profile.is_private ? `🔓 ${t('settings.now_public')}` : `🔒 ${t('settings.private_account')}`}
-          </button>
-          <button className={s.privacyItem} onClick={() => setShowPrivacyMenu(false)}>{t('common.cancel')}</button>
-        </div>
-      )}
-
+      {/* Scrollable body */}
       <div className={s.body}>
-        <div className={s.topSection}>
-          <img src={avatarUrl} alt="" className={s.avatar} />
-          <div className={s.stats}>
-            <div className={s.stat}><strong>{fmt(profile.following_count)}</strong><span>{t('profile.following')}</span></div>
-            <div className={s.stat}><strong>{fmt(profile.followers_count)}</strong><span>{t('profile.followers')}</span></div>
-            <div className={s.stat}><strong>{fmt(profile.likes_count)}</strong><span>{t('profile.likes')}</span></div>
+        {/* Hero */}
+        <div className={s.hero}>
+          <div className={s.heroGradient} />
+          <div className={s.avatarRing}>
+            <img src={avatarUrl} alt="" className={s.avatar} />
+            {profile.is_live && <span className={s.liveRing}>LIVE</span>}
+          </div>
+          <p className={s.displayName}>{profile.first_name || profile.username}</p>
+          <p className={s.handle}>
+            @{profile.username}
+            {profile.is_private && <span className={s.lockIcon}> 🔒</span>}
+          </p>
+          {profile.bio && <p className={s.bio}>{profile.bio}</p>}
+          {profile.is_live && (
+            <Link to={`/live/${profile.username}`} className={s.liveLink}>
+              🔴 {t('profile.live_now')} — {profile.live_title}
+            </Link>
+          )}
+        </div>
+
+        {/* Stats row */}
+        <div className={s.statsRow}>
+          <div className={s.stat}>
+            <strong>{fmt(profile.following_count)}</strong>
+            <span>{t('profile.following')}</span>
+          </div>
+          <div className={s.statDivider} />
+          <div className={s.stat}>
+            <strong>{fmt(profile.followers_count)}</strong>
+            <span>{t('profile.followers')}</span>
+          </div>
+          <div className={s.statDivider} />
+          <div className={s.stat}>
+            <strong>{fmt(profile.likes_count)}</strong>
+            <span>{t('profile.likes')}</span>
           </div>
         </div>
 
-        <p className={s.displayName}>{profile.first_name || profile.username}</p>
-        <p className={s.handle}>@{profile.username}</p>
-        {profile.bio && <p className={s.bio}>{profile.bio}</p>}
-        {profile.is_private && <p className={s.privateNote}>🔒 {t('profile.private_account')}</p>}
-
-        {profile.is_live && (
-          <Link to={`/live/${profile.username}`} className={s.liveNow}>
-            {t('profile.live_now')} — {profile.live_title}
-          </Link>
-        )}
-
+        {/* Action buttons */}
         <div className={s.btnRow}>
           {isMe ? (
             <>
-              <button className={s.editBtn} onClick={() => navigate('/settings')}>{t('profile.edit_profile')}</button>
-              <button
-                className={s.privacyToggleBtn}
-                onClick={togglePrivacy}
-              >
+              <button className={s.editBtn} onClick={() => navigate('/settings')}>
+                {t('profile.edit_profile')}
+              </button>
+              <button className={s.secBtn} onClick={togglePrivacy}>
                 {profile.is_private ? t('profile.privacy_private') : t('profile.privacy_public')}
               </button>
             </>
@@ -177,34 +196,32 @@ export default function ProfilePage() {
         {/* Videos grid */}
         {isPrivateLocked ? (
           <div className={s.privateLocked}>
-            <p style={{ fontSize: '2rem' }}>🔒</p>
-            <p>{t('profile.private_locked_title')}</p>
-            <p style={{ fontSize: '.82rem', color: '#555' }}>{t('profile.private_locked_sub')}</p>
+            <span style={{ fontSize: '2.4rem' }}>🔒</span>
+            <p className={s.privateTitle}>{t('profile.private_locked_title')}</p>
+            <p className={s.privateSub}>{t('profile.private_locked_sub')}</p>
           </div>
+        ) : profile.is_blocked ? (
+          <p className={s.blockedMsg}>{t('profile.blocked_user')}</p>
+        ) : videos.length === 0 ? (
+          <p className={s.emptyMsg}>{t('profile.no_videos')}</p>
         ) : (
           <div className={s.grid}>
-            {profile.is_blocked ? (
-              <p className={s.blocked}>{t('profile.blocked_user')}</p>
-            ) : videos.length === 0 ? (
-              <p className={s.noVideos}>{t('profile.no_videos')}</p>
-            ) : (
-              videos.map((v) => (
-                <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
-                  {v.thumbnail
-                    ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
-                    : <video src={v.video_file} className={s.thumbImg} muted />
-                  }
-                  <div className={s.thumbOverlay}>
-                    <span>▶ {fmt(v.views_count)}</span>
-                    {v.visibility !== 'public' && (
-                      <span className={s.visibilityBadge}>
-                        {v.visibility === 'friends' ? '👥' : v.visibility === 'private' ? '🔒' : '📦'}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))
-            )}
+            {videos.map((v) => (
+              <Link key={v.id} to={`/video/${v.id}`} className={s.thumb}>
+                {v.thumbnail
+                  ? <img src={v.thumbnail} alt="" className={s.thumbImg} />
+                  : <video src={v.video_file} className={s.thumbImg} muted />
+                }
+                <div className={s.thumbOverlay}>
+                  <span>▶ {fmt(v.views_count)}</span>
+                  {v.visibility !== 'public' && (
+                    <span className={s.visBadge}>
+                      {v.visibility === 'friends' ? '👥' : v.visibility === 'private' ? '🔒' : ''}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </div>

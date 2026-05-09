@@ -23,26 +23,28 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import AdminPage from './pages/AdminPage';
 
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="loading-screen">Loading…</div>;
-  if (!user) return <Navigate to="/login" />;
-  // Redirect new users to choose their username
-  if (!user.username_is_set && window.location.pathname !== '/choose-username') {
-    return <Navigate to="/choose-username" />;
-  }
-  return children;
-}
-
+/* Routes only accessible when NOT logged in */
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen">Loading…</div>;
   return user ? <Navigate to="/" /> : children;
 }
 
+/* Routes that require authentication */
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="loading-screen">Loading…</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (!user.username_is_set && window.location.pathname !== '/choose-username') {
+    return <Navigate to="/choose-username" />;
+  }
+  return children;
+}
+
+/* Shared layout with optional bottom nav */
 function AppLayout({ children, hideNav }) {
   return (
-    <div style={{ height: '100vh', background: '#000', position: 'relative' }}>
+    <div style={{ height: '100vh', background: 'var(--bg)', position: 'relative' }}>
       {children}
       {!hideNav && <BottomNav />}
     </div>
@@ -55,26 +57,31 @@ function AppContent() {
     <NotificationProvider user={user}>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          {/* Auth pages */}
+          <Route path="/login"          element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/register"       element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-          <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-          <Route path="/" element={<PrivateRoute><AppLayout><FeedPage /></AppLayout></PrivateRoute>} />
-          <Route path="/search" element={<PrivateRoute><AppLayout><SearchPage /></AppLayout></PrivateRoute>} />
-          <Route path="/upload" element={<PrivateRoute><AppLayout hideNav><UploadPage /></AppLayout></PrivateRoute>} />
-          <Route path="/inbox" element={<PrivateRoute><AppLayout><InboxPage /></AppLayout></PrivateRoute>} />
-          <Route path="/friends" element={<PrivateRoute><AppLayout><FriendsPage /></AppLayout></PrivateRoute>} />
+          <Route path="/reset-password"  element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+
+          {/* Public browsable pages — guests allowed, BottomNav shown */}
+          <Route path="/"              element={<AppLayout><FeedPage /></AppLayout>} />
+          <Route path="/search"        element={<AppLayout><SearchPage /></AppLayout>} />
+          <Route path="/hashtag/:tag"  element={<AppLayout hideNav><HashtagPage /></AppLayout>} />
+          <Route path="/video/:id"     element={<AppLayout hideNav><VideoPage /></AppLayout>} />
+          <Route path="/profile/:username" element={<AppLayout hideNav><ProfilePage /></AppLayout>} />
+
+          {/* Auth-required pages */}
+          <Route path="/upload"    element={<PrivateRoute><AppLayout hideNav><UploadPage /></AppLayout></PrivateRoute>} />
+          <Route path="/inbox"     element={<PrivateRoute><AppLayout><InboxPage /></AppLayout></PrivateRoute>} />
+          <Route path="/friends"   element={<PrivateRoute><AppLayout><FriendsPage /></AppLayout></PrivateRoute>} />
+          <Route path="/me"        element={<PrivateRoute><AppLayout><ProfilePage /></AppLayout></PrivateRoute>} />
           <Route path="/messages/:id" element={<PrivateRoute><AppLayout hideNav><ConversationPage /></AppLayout></PrivateRoute>} />
-          <Route path="/profile/:username" element={<PrivateRoute><AppLayout hideNav><ProfilePage /></AppLayout></PrivateRoute>} />
-          <Route path="/me" element={<PrivateRoute><AppLayout><ProfilePage /></AppLayout></PrivateRoute>} />
-          <Route path="/video/:id" element={<PrivateRoute><AppLayout hideNav><VideoPage /></AppLayout></PrivateRoute>} />
-          <Route path="/hashtag/:tag" element={<PrivateRoute><AppLayout hideNav><HashtagPage /></AppLayout></PrivateRoute>} />
-          <Route path="/live/:id" element={<PrivateRoute><AppLayout hideNav><LivePage /></AppLayout></PrivateRoute>} />
-          <Route path="/choose-username" element={<PrivateRoute><ChooseUsernamePage /></PrivateRoute>} />
-          <Route path="/camera" element={<PrivateRoute><CameraPage /></PrivateRoute>} />
+          <Route path="/live/:id"  element={<PrivateRoute><AppLayout hideNav><LivePage /></AppLayout></PrivateRoute>} />
+          <Route path="/settings"  element={<PrivateRoute><AppLayout hideNav><SettingsPage /></AppLayout></PrivateRoute>} />
+          <Route path="/camera"    element={<PrivateRoute><CameraPage /></PrivateRoute>} />
           <Route path="/edit-post" element={<PrivateRoute><EditPostPage /></PrivateRoute>} />
-          <Route path="/settings" element={<PrivateRoute><AppLayout hideNav><SettingsPage /></AppLayout></PrivateRoute>} />
-          <Route path="/admin-panel" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
+          <Route path="/choose-username" element={<PrivateRoute><ChooseUsernamePage /></PrivateRoute>} />
+          <Route path="/admin-panel"     element={<PrivateRoute><AdminPage /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </NotificationProvider>

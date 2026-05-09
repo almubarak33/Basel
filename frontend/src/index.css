@@ -1,8 +1,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
-  background: #000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0a0a12;
   color: #fff;
   overflow: hidden;
   height: 100vh;
@@ -13,17 +13,36 @@ button { cursor: pointer; border: none; outline: none; font-family: inherit; bac
 input, textarea { font-family: inherit; outline: none; }
 
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 2px; }
 
 :root {
-  --pink: #fe2c55;
-  --pink-glow: rgba(254,44,85,0.3);
-  --teal: #25f4ee;
-  --bg: #000;
-  --bg-card: #111;
-  --bg-overlay: rgba(0,0,0,0.5);
-  --border: #222;
-  --text-muted: #888;
+  /* SayHi brand palette */
+  --pink: #ff3366;
+  --pink-light: #ff6688;
+  --pink-glow: rgba(255, 51, 102, 0.28);
+  --purple: #9b5de5;
+  --purple-glow: rgba(155, 93, 229, 0.25);
+  --gradient: linear-gradient(135deg, #ff3366 0%, #9b5de5 100%);
+  --gradient-soft: linear-gradient(135deg, rgba(255,51,102,0.15) 0%, rgba(155,93,229,0.15) 100%);
+
+  /* Backgrounds */
+  --bg: #0a0a12;
+  --surface: #12121c;
+  --card: #181824;
+  --card-hover: #1e1e2c;
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.07);
+  --border-soft: rgba(255, 255, 255, 0.04);
+
+  /* Text */
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.52);
+  --text-dim: rgba(255, 255, 255, 0.28);
+
+  /* Legacy compat */
+  --bg-card: #181824;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
 }
 
 .loading-screen {
@@ -31,6 +50,7 @@ input, textarea { font-family: inherit; outline: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
+  color: var(--text-muted);
   font-size: .9rem;
+  background: var(--bg);
 }

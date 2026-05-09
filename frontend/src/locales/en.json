@@ -12,12 +12,16 @@
   "feed": {
     "for_you": "For You",
     "following": "Following",
+    "creators": "Creators",
+    "live": "Live",
     "subscriptions": "🔔 Tags",
     "saved": "🔖 Saved",
     "empty_following": "Follow people to see their videos here!",
     "empty_saved": "You haven't saved any videos yet.",
     "empty_subscriptions": "Subscribe to hashtags to see their videos here!",
-    "empty": "No videos yet!"
+    "empty": "No videos yet!",
+    "guest_cta": "Join SayHi to follow creators, like videos and chat with friends.",
+    "join_now": "Join Now — it's free"
   },
 
   "inbox": {

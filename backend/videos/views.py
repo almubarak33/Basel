@@ -69,11 +69,17 @@ def _boost_interests(user, hashtag_names, delta=1):
 
 
 class ForYouFeedView(generics.ListAPIView):
-    """FYP: interest-based > following > trending > random."""
+    """FYP: interest-based > following > trending > random. Guests see trending."""
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return (
+                Video.objects.filter(visibility='public')
+                .annotate(score=Count('likes'))
+                .order_by('-score', '-created_at')[:30]
+            )
         user = self.request.user
         blocked = get_blocked_ids(user)
         watched_ids = set(user.watched.values_list('video_id', flat=True))
@@ -344,17 +350,17 @@ class VideoUploadView(generics.CreateAPIView):
 
 class VideoDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Video.objects.all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Video.objects.filter(visibility='public')
 
     def retrieve(self, request, *args, **kwargs):
         video = self.get_object()
         Video.objects.filter(pk=video.pk).update(views_count=video.views_count + 1)
-        WatchedVideo.objects.get_or_create(user=request.user, video=video)
-        # Boost interests for this video's hashtags
-        tag_names = list(video.hashtags.values_list('name', flat=True))
-        if tag_names:
-            _boost_interests(request.user, tag_names, delta=1)
+        if request.user.is_authenticated:
+            WatchedVideo.objects.get_or_create(user=request.user, video=video)
+            tag_names = list(video.hashtags.values_list('name', flat=True))
+            if tag_names:
+                _boost_interests(request.user, tag_names, delta=1)
         serializer = self.get_serializer(video)
         return Response(serializer.data)
 
@@ -398,20 +404,22 @@ class SavedVideosView(generics.ListAPIView):
 
 class HashtagVideosView(generics.ListAPIView):
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         name = self.kwargs['name'].lower()
         tag = get_object_or_404(Hashtag, name=name)
-        blocked = get_blocked_ids(self.request.user)
-        # Boost interest for this hashtag
-        _boost_interests(self.request.user, [name], delta=2)
-        return tag.videos.exclude(author_id__in=blocked)
+        qs = tag.videos.filter(visibility='public')
+        if self.request.user.is_authenticated:
+            blocked = get_blocked_ids(self.request.user)
+            _boost_interests(self.request.user, [name], delta=2)
+            qs = qs.exclude(author_id__in=blocked)
+        return qs
 
 
 class TrendingHashtagsView(generics.ListAPIView):
     serializer_class = HashtagSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         return Hashtag.objects.annotate(count=Count('videos')).order_by('-count')[:15]
@@ -419,19 +427,21 @@ class TrendingHashtagsView(generics.ListAPIView):
 
 class SearchView(generics.ListAPIView):
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         q = self.request.query_params.get('q', '').strip()
         if not q:
             return Video.objects.none()
-        blocked = get_blocked_ids(self.request.user)
-        # Boost interest for hashtag-style search terms
-        import re
-        tags = re.findall(r'#?(\w+)', q)
-        if tags:
-            _boost_interests(self.request.user, tags, delta=3)
-        return Video.objects.filter(caption__icontains=q).exclude(author_id__in=blocked)
+        qs = Video.objects.filter(caption__icontains=q, visibility='public')
+        if self.request.user.is_authenticated:
+            import re
+            blocked = get_blocked_ids(self.request.user)
+            tags = re.findall(r'#?(\w+)', q)
+            if tags:
+                _boost_interests(self.request.user, tags, delta=3)
+            qs = qs.exclude(author_id__in=blocked)
+        return qs
 
 
 class VideoCommentListCreateView(generics.ListCreateAPIView):
@@ -599,7 +609,7 @@ def download_video(request, pk):
 # ─── Explore ──────────────────────────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def explore_feed(request):
     """Trending videos (last 7 days) + suggested users."""
     from datetime import timedelta
@@ -776,3 +786,47 @@ def admin_toggle_ban(request, pk):
     user.is_active = not user.is_active
     user.save(update_fields=['is_active'])
     return Response({'is_active': user.is_active})
+
+
+# ─── Discovery feeds (public) ─────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def moments_feed(request):
+    """Public videos posted in the last 24 hours."""
+    from datetime import timedelta
+    from django.utils import timezone
+    cutoff = timezone.now() - timedelta(hours=24)
+    videos = (
+        Video.objects.filter(visibility='public', created_at__gte=cutoff)
+        .select_related('author')
+        .order_by('-created_at')[:60]
+    )
+    return Response(VideoSerializer(videos, many=True, context={'request': request}).data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def creators_list(request):
+    """Top creators by follower count who have posted at least one video."""
+    from django.db.models import Count as DCount
+    users = (
+        User.objects.filter(is_active=True)
+        .annotate(followers_count=DCount('followers'), vid_count=DCount('videos'))
+        .filter(vid_count__gt=0)
+        .order_by('-followers_count')[:24]
+    )
+    from users.serializers import UserMiniSerializer
+    return Response(UserMiniSerializer(users, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def nearby_feed(request):
+    """Location-aware feed. Currently returns recent public videos; extend with geo later."""
+    videos = (
+        Video.objects.filter(visibility='public')
+        .select_related('author')
+        .order_by('-created_at')[:40]
+    )
+    return Response(VideoSerializer(videos, many=True, context={'request': request}).data)
