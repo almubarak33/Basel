@@ -1,0 +1,184 @@
+/* ── Card container ── */
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  margin: 0 12px 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-soft);
+}
+
+/* ── Author row ── */
+.authorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+}
+
+.authorLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.authorText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.handle {
+  font-size: .72rem;
+  color: var(--text-muted);
+}
+
+.followChip {
+  padding: 5px 14px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.followChip:active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Media ── */
+.mediaWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  background: #111;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.mediaImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .2s;
+}
+.mediaWrap:active .mediaImg { transform: scale(1.02); }
+
+.playBtn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.mediaWrap:hover .playBtn,
+.mediaWrap:active .playBtn { opacity: 1; }
+
+/* ── Caption ── */
+.caption {
+  padding: 10px 14px 4px;
+  font-size: .85rem;
+  color: rgba(255,255,255,0.82);
+  line-height: 1.5;
+}
+
+.moreBtn {
+  color: var(--text-muted);
+  font-size: .82rem;
+  font-weight: 600;
+  display: inline;
+}
+
+/* ── Actions row ── */
+.actions {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px 14px;
+  gap: 6px;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background .15s, color .15s;
+}
+.action:active { background: var(--elevated); }
+
+.actionLiked { color: var(--accent); }
+
+/* ── Say Hi button (primary action) ── */
+.sayHiBtn {
+  margin-left: auto;
+  padding: 8px 18px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 22px;
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  box-shadow: 0 3px 14px var(--accent-glow);
+  transition: transform .15s, box-shadow .15s, background .2s;
+  flex-shrink: 0;
+}
+.sayHiBtn:active { transform: scale(0.94); box-shadow: 0 1px 6px var(--accent-glow); }
+
+.saidHi {
+  background: var(--elevated);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+/* ── Toast ── */
+.toast {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fadeUp .25s ease;
+  z-index: 10;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
