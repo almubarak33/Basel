@@ -22,8 +22,11 @@ api.interceptors.response.use(
           original.headers.Authorization = `Bearer ${data.access}`;
           return api(original);
         } catch {
-          localStorage.clear();
-          window.location.href = '/login';
+          // Tokens are invalid — clear them and notify the app.
+          // Never hard-redirect: let the current page keep working as a guest.
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.dispatchEvent(new CustomEvent('auth:logout'));
         }
       }
     }

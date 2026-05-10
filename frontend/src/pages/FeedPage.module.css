@@ -41,6 +41,19 @@
 }
 .iconBtn:active { color: #fff; background: var(--elevated); }
 
+/* Guest login button in header */
+.loginBtn {
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 700;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px var(--accent-glow);
+  transition: transform .15s;
+}
+.loginBtn:active { transform: scale(0.94); }
+
 .navAvatar {
   width: 30px;
   height: 30px;

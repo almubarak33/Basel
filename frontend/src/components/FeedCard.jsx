@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import { promptLogin } from './LoginModal';
 import s from './FeedCard.module.css';
 
 const HeartIcon = ({ filled }) => (
@@ -56,7 +57,7 @@ export default function FeedCard({ video }) {
   };
 
   const toggleLike = async () => {
-    if (!user) { navigate('/login'); return; }
+    if (!user) { promptLogin(); return; }
     const wasLiked = liked;
     setLiked(!wasLiked);
     setLikes((c) => wasLiked ? c - 1 : c + 1);
@@ -69,7 +70,7 @@ export default function FeedCard({ video }) {
   };
 
   const doSayHi = async () => {
-    if (!user) { navigate('/login'); return; }
+    if (!user) { promptLogin(); return; }
     if (saidHi || isOwn) return;
     setSaidHi(true);
     flash(`Said Hi to @${username}! 👋`);

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import FeedCard from '../components/FeedCard';
 import VideoCard from '../components/VideoCard';
 import MomentsBar from '../components/MomentsBar';
+import { promptLogin } from '../components/LoginModal';
 import s from './FeedPage.module.css';
 
 /* Tab keys → API endpoints */
@@ -65,20 +66,23 @@ export default function FeedPage() {
           <span className={s.logoPink}>Say</span><span className={s.logoWhite}>Hi</span>
         </span>
 
-        <button
-          className={s.iconBtn}
-          onClick={() => navigate(user ? '/inbox' : '/login')}
-          aria-label="Notifications"
-        >
-          {user?.avatar ? (
-            <img src={user.avatar} alt="" className={s.navAvatar} />
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" width="22" height="22">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          )}
-        </button>
+        {user ? (
+          <button className={s.iconBtn} onClick={() => navigate('/inbox')} aria-label="Notifications">
+            {user.avatar
+              ? <img src={user.avatar} alt="" className={s.navAvatar} />
+              : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" width="22" height="22">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+              )
+            }
+          </button>
+        ) : (
+          <button className={s.loginBtn} onClick={promptLogin}>
+            Log In
+          </button>
+        )}
       </header>
 
       {/* ── Tabs ── */}
@@ -109,10 +113,10 @@ export default function FeedPage() {
           </>
         )}
 
-        {!user && (
+        {!user && tab === 'foryou' && data.length > 0 && (
           <div className={s.guestBanner}>
             <p className={s.guestText}>{t('feed.guest_cta')}</p>
-            <button className={s.guestBtn} onClick={() => navigate('/register')}>
+            <button className={s.guestBtn} onClick={promptLogin}>
               {t('feed.join_now')}
             </button>
           </div>
