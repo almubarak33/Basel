@@ -1,0 +1,117 @@
+/* Backdrop */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  animation: fadein .2s ease;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Bottom sheet */
+.sheet {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 24px 40px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: slideup .25s ease;
+}
+
+@keyframes slideup {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+
+/* Brand */
+.logo {
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  margin-bottom: 16px;
+}
+.logoPink  { color: var(--accent); }
+.logoWhite { color: #fff; }
+
+/* Copy */
+.title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-size: .86rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.55;
+  max-width: 300px;
+  margin-bottom: 26px;
+}
+
+/* Buttons */
+.actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.primaryBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .97rem;
+  font-weight: 800;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px var(--accent-glow);
+  transition: transform .15s, box-shadow .15s;
+}
+.primaryBtn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.secondaryBtn {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: #fff;
+  font-size: .93rem;
+  font-weight: 700;
+  border-radius: 14px;
+  transition: background .15s;
+}
+.secondaryBtn:active { background: var(--card); }
+
+.dismissBtn {
+  font-size: .8rem;
+  color: var(--text-dim);
+  padding: 6px;
+  transition: color .15s;
+}
+.dismissBtn:active { color: var(--text-muted); }

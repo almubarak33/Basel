@@ -1,0 +1,335 @@
+from rest_framework import generics, status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+from django.utils.crypto import get_random_string
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings as django_settings
+from .models import Follow, Block, FriendRequest
+from .serializers import RegisterSerializer, UserSerializer, UserMiniSerializer
+
+User = get_user_model()
+
+_RESET_CACHE_PREFIX = 'pwd_reset_'
+_RESET_TTL = 3600  # 1 hour
+
+
+def _notify(recipient, sender, ntype, text='', video=None):
+    """Create a notification and push it over WebSocket."""
+    if recipient == sender:
+        return
+    try:
+        from notifications.models import Notification
+        notif = Notification.objects.create(
+            recipient=recipient, sender=sender,
+            type=ntype, text=text, video=video,
+        )
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        avatar = sender.avatar.url if (sender and sender.avatar) else None
+        payload = {
+            'id': notif.pk,
+            'type': ntype,
+            'text': text,
+            'is_read': False,
+            'created_at': notif.created_at.isoformat(),
+            'sender': {'username': sender.username, 'avatar': avatar} if sender else None,
+            'video_thumbnail': video.thumbnail.url if (video and video.thumbnail) else None,
+        }
+        async_to_sync(get_channel_layer().group_send)(
+            f'notifications_{recipient.pk}',
+            {'type': 'push_notification', 'data': payload},
+        )
+    except Exception:
+        pass
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user, context={'request': request}).data,
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_201_CREATED)
+
+
+class MeView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def perform_update(self, serializer):
+        # If user is changing their username, mark it as user-set
+        instance = serializer.save()
+        if 'username' in serializer.validated_data and not instance.username_is_set:
+            User.objects.filter(pk=instance.pk).update(username_is_set=True)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def check_username(request):
+    username = request.query_params.get('username', '').strip()
+    if not username:
+        return Response({'available': False, 'error': 'اسم المستخدم مطلوب.'})
+    if len(username) < 3:
+        return Response({'available': False, 'error': f'اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل (المُدخَل: {len(username)} حرف فقط).'})
+    if len(username) > 30:
+        return Response({'available': False, 'error': 'الحد الأقصى 30 حرفاً.'})
+    import re
+    if not re.match(r'^[a-zA-Z0-9_.]+$', username):
+        return Response({'available': False, 'error': 'أحرف إنجليزية وأرقام و _ و . فقط.'})
+    taken = User.objects.filter(username__iexact=username).exists()
+    return Response({'available': not taken, 'error': 'هذا الاسم مأخوذ.' if taken else None})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def set_username(request):
+    """First-time username setup — marks username_is_set=True."""
+    username = request.data.get('username', '').strip()
+    if not username:
+        return Response({'error': 'اسم المستخدم مطلوب.'}, status=400)
+    import re
+    if len(username) < 3:
+        return Response({'error': 'اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل.'}, status=400)
+    if not re.match(r'^[a-zA-Z0-9_.]{3,30}$', username):
+        return Response({'error': 'أحرف إنجليزية وأرقام و _ و . فقط.'}, status=400)
+    if User.objects.filter(username__iexact=username).exclude(pk=request.user.pk).exists():
+        return Response({'error': 'هذا الاسم مأخوذ.'}, status=400)
+    User.objects.filter(pk=request.user.pk).update(username=username, username_is_set=True)
+    request.user.refresh_from_db()
+    return Response(UserSerializer(request.user, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def change_password(request):
+    old = request.data.get('old_password', '')
+    new = request.data.get('new_password', '')
+    if not request.user.check_password(old):
+        return Response({'error': 'كلمة المرور الحالية غير صحيحة.'}, status=400)
+    if len(new) < 8:
+        return Response({'error': 'كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل.'}, status=400)
+    request.user.set_password(new)
+    request.user.save()
+    return Response({'detail': 'تم تغيير كلمة المرور بنجاح.'})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def delete_account(request):
+    request.user.delete()
+    return Response(status=204)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def search_users(request):
+    q = request.query_params.get('q', '').strip()
+    if not q:
+        return Response([])
+    blocked = set(request.user.blocking.values_list('blocked_id', flat=True))
+    blocked |= set(request.user.blocked_by.values_list('blocker_id', flat=True))
+    users = User.objects.filter(username__icontains=q).exclude(pk__in=blocked).exclude(pk=request.user.pk)[:20]
+    return Response(UserMiniSerializer(users, many=True).data)
+
+
+class UserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    lookup_field = 'username'
+    queryset = User.objects.all()
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def follow_user(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return Response({'detail': 'Cannot follow yourself.'}, status=400)
+    _, created = Follow.objects.get_or_create(follower=request.user, following=target)
+    if created:
+        _notify(target, request.user, 'follow', f'@{request.user.username} started following you.')
+    return Response({'detail': f'Now following {username}.'})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unfollow_user(request, username):
+    target = get_object_or_404(User, username=username)
+    Follow.objects.filter(follower=request.user, following=target).delete()
+    return Response({'detail': f'Unfollowed {username}.'})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def followers_list(request, username):
+    user = get_object_or_404(User, username=username)
+    followers = User.objects.filter(following__following=user)
+    serializer = UserMiniSerializer(followers, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def following_list(request, username):
+    user = get_object_or_404(User, username=username)
+    following = User.objects.filter(followers__follower=user)
+    serializer = UserMiniSerializer(following, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def friends_list(request, username):
+    user = get_object_or_404(User, username=username)
+    friends = user.get_friends()
+    serializer = UserMiniSerializer(friends, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def send_friend_request(request, username):
+    receiver = get_object_or_404(User, username=username)
+    if receiver == request.user:
+        return Response({'detail': 'Cannot send request to yourself.'}, status=400)
+    req, created = FriendRequest.objects.get_or_create(
+        sender=request.user, receiver=receiver,
+        defaults={'status': 'pending'}
+    )
+    if created:
+        _notify(receiver, request.user, 'friend_request',
+                f'@{request.user.username} sent you a friend request.')
+    return Response({'status': req.status, 'created': created})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def respond_friend_request(request, pk):
+    """Accept or reject a received friend request."""
+    req = get_object_or_404(FriendRequest, pk=pk, receiver=request.user, status='pending')
+    action = request.data.get('action')
+    if action == 'accept':
+        req.status = 'accepted'
+        req.save()
+        # Mutual follow to make them friends
+        Follow.objects.get_or_create(follower=request.user, following=req.sender)
+        Follow.objects.get_or_create(follower=req.sender, following=request.user)
+        _notify(req.sender, request.user, 'friend_accept',
+                f'@{request.user.username} accepted your friend request.')
+    elif action == 'reject':
+        req.status = 'rejected'
+        req.save()
+    return Response({'status': req.status})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def pending_friend_requests(request):
+    """Received friend requests still pending."""
+    reqs = FriendRequest.objects.filter(receiver=request.user, status='pending').select_related('sender')
+    data = [
+        {
+            'id': r.pk,
+            'sender': UserMiniSerializer(r.sender).data,
+            'created_at': r.created_at,
+        }
+        for r in reqs
+    ]
+    return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def block_user(request, username):
+    target = get_object_or_404(User, username=username)
+    if target == request.user:
+        return Response({'detail': 'Cannot block yourself.'}, status=400)
+    Block.objects.get_or_create(blocker=request.user, blocked=target)
+    Follow.objects.filter(follower=request.user, following=target).delete()
+    Follow.objects.filter(follower=target, following=request.user).delete()
+    return Response({'detail': f'Blocked {username}.'})
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def unblock_user(request, username):
+    target = get_object_or_404(User, username=username)
+    Block.objects.filter(blocker=request.user, blocked=target).delete()
+    return Response({'detail': f'Unblocked {username}.'})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def blocked_list(request):
+    blocked = User.objects.filter(blocked_by__blocker=request.user)
+    serializer = UserSerializer(blocked, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def forgot_password(request):
+    email = request.data.get('email', '').strip().lower()
+    if not email:
+        return Response({'error': 'البريد الإلكتروني مطلوب.'}, status=400)
+
+    # Always return success to avoid leaking whether an email is registered
+    user = User.objects.filter(email__iexact=email).first()
+    if user:
+        token = get_random_string(48)
+        cache.set(f'{_RESET_CACHE_PREFIX}{token}', user.pk, _RESET_TTL)
+
+        reset_link = f'{getattr(django_settings, "FRONTEND_URL", "http://localhost:3000")}/reset-password?token={token}'
+        try:
+            send_mail(
+                'SayHi — إعادة تعيين كلمة المرور',
+                f'مرحباً {user.username},\n\nانقر على الرابط أدناه لإعادة تعيين كلمة مرورك (صالح لساعة واحدة):\n{reset_link}\n\nإذا لم تطلب ذلك، تجاهل هذه الرسالة.',
+                getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@sayhi.app'),
+                [email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+    return Response({'detail': 'إذا كان البريد الإلكتروني مسجلاً، ستصل رسالة الاسترداد قريباً.'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def reset_password(request):
+    token = request.data.get('token', '').strip()
+    new_password = request.data.get('new_password', '')
+
+    if not token:
+        return Response({'error': 'الرمز مطلوب.'}, status=400)
+    if len(new_password) < 8:
+        return Response({'error': 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.'}, status=400)
+
+    user_pk = cache.get(f'{_RESET_CACHE_PREFIX}{token}')
+    if not user_pk:
+        return Response({'error': 'الرمز غير صالح أو منتهي الصلاحية.'}, status=400)
+
+    try:
+        user = User.objects.get(pk=user_pk)
+    except User.DoesNotExist:
+        return Response({'error': 'المستخدم غير موجود.'}, status=400)
+
+    user.set_password(new_password)
+    user.save()
+    cache.delete(f'{_RESET_CACHE_PREFIX}{token}')
+    return Response({'detail': 'تم إعادة تعيين كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن.'})

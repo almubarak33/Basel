@@ -1,0 +1,31 @@
+.page { height: 100vh; background: #000; display: flex; flex-direction: column; overflow: hidden; }
+.header { padding: 16px; border-bottom: 1px solid #111; }
+.header h2 { font-size: 1.1rem; font-weight: 800; }
+
+.tabBar { display: flex; border-bottom: 1px solid #111; }
+.tabBtn { flex: 1; padding: 12px 0; font-size: .88rem; font-weight: 600; color: #555; border-bottom: 2px solid transparent; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tabActive { color: #fff; border-bottom-color: #fe2c55; }
+.badge { background: #fe2c55; color: #fff; font-size: .6rem; font-weight: 800; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+.body { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.loader { display: flex; justify-content: center; padding: 40px; }
+.spinner { width: 32px; height: 32px; border: 3px solid #222; border-top-color: #fe2c55; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { color: #444; font-size: .88rem; text-align: center; padding: 30px 20px; }
+
+.reqCard { display: flex; align-items: center; gap: 12px; padding: 12px; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 12px; }
+.reqAvatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #333; cursor: pointer; flex-shrink: 0; }
+.reqInfo { flex: 1; }
+.reqName { font-size: .9rem; font-weight: 700; color: #ddd; margin-bottom: 8px; }
+.reqActions { display: flex; gap: 8px; }
+.acceptBtn { padding: 6px 18px; background: #fe2c55; color: #fff; border-radius: 6px; font-size: .82rem; font-weight: 700; }
+.rejectBtn { padding: 6px 18px; border: 1px solid #333; color: #888; border-radius: 6px; font-size: .82rem; font-weight: 600; }
+
+.friendCard { display: flex; align-items: center; gap: 12px; padding: 12px; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 12px; }
+.friendAvatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #333; cursor: pointer; flex-shrink: 0; }
+.friendInfo { flex: 1; }
+.friendName { font-size: .9rem; font-weight: 700; color: #ddd; }
+.liveBadge { font-size: .72rem; color: #fe2c55; font-weight: 700; }
+.msgBtn { padding: 8px 16px; background: #111; border: 1px solid #222; color: #fff; border-radius: 8px; font-size: .82rem; font-weight: 600; white-space: nowrap; }
+.msgBtn:hover { background: #1a1a1a; }

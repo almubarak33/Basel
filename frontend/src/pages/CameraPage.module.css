@@ -1,0 +1,405 @@
+.page {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* ── Camera preview ── */
+.preview {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.videoPreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  padding: 24px;
+  background: #111;
+}
+
+/* ── Countdown overlay ── */
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 96px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.8);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ── Recording badge ── */
+.recordingBadge {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  z-index: 10;
+}
+
+.recDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3040;
+  animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ── Top bar ── */
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  background: rgba(0,0,0,0.45);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addSoundBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* ── Left toolbar ── */
+.leftTools {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-55%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolBtn {
+  width: 44px;
+  height: 44px;
+  background: rgba(0,0,0,0.45);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: background 0.15s;
+}
+
+.toolBtn:active {
+  background: rgba(255,255,255,0.2);
+}
+
+.toolDim {
+  opacity: 0.45;
+}
+
+.toolLabel {
+  font-size: 9px;
+  line-height: 1;
+}
+
+.toolDivider {
+  width: 24px;
+  height: 1px;
+  background: rgba(255,255,255,0.3);
+  margin: 4px 0;
+}
+
+/* ── Filter strip ── */
+.filterStrip {
+  position: absolute;
+  bottom: 230px;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filterStrip::-webkit-scrollbar { display: none; }
+
+.filterItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 11px;
+}
+
+.filterPreview {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f6c 0%, #9cf 50%, #fc9 100%);
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.filterActive .filterPreview {
+  border-color: #ff3040;
+}
+
+.filterActive {
+  color: #ff3040;
+}
+
+/* ── Bottom controls ── */
+.bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%);
+  padding-top: 24px;
+}
+
+/* ── Duration selector ── */
+.durations {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.durBtn {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.durActive {
+  background: #ff3040;
+}
+
+/* ── Capture row ── */
+.captureRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 32px;
+  margin-bottom: 14px;
+}
+
+.galleryBtn {
+  width: 56px;
+  height: 56px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+
+/* ── Record button ── */
+.recordWrap {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.recordWrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.5);
+}
+
+/* Progress ring when recording */
+.recordingWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: #ff3040;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.recordBtn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #ff3040;
+  transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+
+.photoBtn {
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+}
+
+.recordingBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #ff3040;
+}
+
+/* ── Mode tabs ── */
+.modeTabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
+.modeTabsRow {
+  display: flex;
+  gap: 0;
+}
+
+/* Inline flex for mode buttons */
+.modeTabs > .modeTab {
+  display: inline-flex;
+}
+
+.modeTab {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.65);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: color 0.15s;
+  position: relative;
+}
+
+.modeActive {
+  color: #fff;
+}
+
+.modeActive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+/* ── Photo/Video sub-toggle ── */
+.subMode {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 3px;
+}
+
+.subBtn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.subActive {
+  background: #fff;
+  color: #000;
+}

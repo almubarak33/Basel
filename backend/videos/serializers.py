@@ -1,0 +1,102 @@
+from rest_framework import serializers
+from .models import Video, VideoLike, VideoComment, Hashtag, SavedVideo, Repost, PhotoSlide
+from users.serializers import UserMiniSerializer
+
+
+class PhotoSlideSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhotoSlide
+        fields = ('id', 'image', 'order')
+
+
+class HashtagSerializer(serializers.ModelSerializer):
+    videos_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Hashtag
+        fields = ('id', 'name', 'videos_count')
+
+    def get_videos_count(self, obj):
+        return obj.videos.count()
+
+
+class VideoCommentSerializer(serializers.ModelSerializer):
+    author = UserMiniSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VideoComment
+        fields = ('id', 'author', 'content', 'created_at', 'replies')
+        read_only_fields = ('id', 'author', 'created_at', 'replies')
+
+    def get_replies(self, obj):
+        if obj.parent_id is not None:
+            return []
+        qs = obj.replies.select_related('author').order_by('created_at')
+        return VideoCommentReplySerializer(qs, many=True, context=self.context).data
+
+
+class VideoCommentReplySerializer(serializers.ModelSerializer):
+    """Flat serializer for replies — no nested replies field to avoid recursion."""
+    author = UserMiniSerializer(read_only=True)
+
+    class Meta:
+        model = VideoComment
+        fields = ('id', 'author', 'content', 'created_at')
+        read_only_fields = ('id', 'author', 'created_at')
+
+
+class VideoSerializer(serializers.ModelSerializer):
+    author = UserMiniSerializer(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    saves_count = serializers.SerializerMethodField()
+    reposts_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
+    is_reposted = serializers.SerializerMethodField()
+    hashtags = HashtagSerializer(many=True, read_only=True)
+    slides = PhotoSlideSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Video
+        fields = (
+            'id', 'author', 'post_type', 'video_file', 'thumbnail', 'audio_file', 'caption',
+            'hashtags', 'slides', 'views_count', 'visibility',
+            'likes_count', 'comments_count', 'saves_count', 'reposts_count',
+            'is_liked', 'is_saved', 'is_reposted',
+            'is_age_restricted', 'is_flagged', 'created_at',
+        )
+        read_only_fields = (
+            'id', 'author', 'views_count', 'created_at', 'hashtags', 'is_flagged', 'slides'
+        )
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+    def get_saves_count(self, obj):
+        return obj.saved_by.count()
+
+    def get_reposts_count(self, obj):
+        return obj.reposts.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return VideoLike.objects.filter(user=request.user, video=obj).exists()
+        return False
+
+    def get_is_saved(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return SavedVideo.objects.filter(user=request.user, video=obj).exists()
+        return False
+
+    def get_is_reposted(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Repost.objects.filter(user=request.user, video=obj).exists()
+        return False

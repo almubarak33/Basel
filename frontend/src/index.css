@@ -1,0 +1,58 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #121212;
+  color: #fff;
+  overflow: hidden;
+  height: 100vh;
+}
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; outline: none; font-family: inherit; background: none; }
+input, textarea { font-family: inherit; outline: none; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #2c2c2c; border-radius: 2px; }
+
+:root {
+  /* SayHi brand */
+  --accent:       #FF005C;
+  --accent-light: #FF4D8D;
+  --accent-glow:  rgba(255, 0, 92, 0.25);
+  --purple:       #9b5de5;
+  --gradient:     linear-gradient(135deg, #FF005C 0%, #9b5de5 100%);
+  --gradient-soft: linear-gradient(135deg, rgba(255,0,92,0.12) 0%, rgba(155,93,229,0.12) 100%);
+
+  /* Surfaces */
+  --bg:       #121212;
+  --surface:  #1a1a1a;
+  --card:     #1e1e1e;
+  --elevated: #242424;
+
+  /* Borders */
+  --border:      rgba(255,255,255,0.08);
+  --border-soft: rgba(255,255,255,0.04);
+
+  /* Text */
+  --text:       #ffffff;
+  --text-muted: rgba(255,255,255,0.55);
+  --text-dim:   rgba(255,255,255,0.28);
+
+  /* Legacy aliases so existing pages don't break */
+  --pink:       #FF005C;
+  --pink-light: #FF4D8D;
+  --pink-glow:  rgba(255, 0, 92, 0.25);
+  --bg-card:    #1e1e1e;
+  --bg-overlay: rgba(0,0,0,0.5);
+}
+
+.loading-screen {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: .9rem;
+  background: var(--bg);
+}

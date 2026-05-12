@@ -1,0 +1,96 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(18, 18, 18, 0.97);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Regular buttons ── */
+.btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: rgba(255,255,255,0.38);
+  transition: color .2s;
+  position: relative;
+}
+
+.btn.active { color: #fff; }
+
+.iconWrap { position: relative; display: flex; align-items: center; justify-content: center; }
+
+/* ── Label ── */
+.label {
+  font-size: .56rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+/* ── Avatar ── */
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid transparent;
+  transition: border-color .2s;
+}
+.avatarActive { border-color: var(--accent); }
+
+/* ── Create button ── */
+.createBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-muted);
+}
+
+.createInner {
+  width: 42px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 14px var(--accent-glow);
+  transition: transform .15s, box-shadow .15s;
+}
+.createBtn:active .createInner {
+  transform: scale(0.91);
+  box-shadow: 0 1px 5px var(--accent-glow);
+}
+
+/* ── Badge ── */
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .48rem;
+  font-weight: 800;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid var(--bg);
+}

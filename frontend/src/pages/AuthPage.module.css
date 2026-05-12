@@ -1,0 +1,64 @@
+.page {
+  min-height: 100vh; background: #000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+.logo {
+  font-size: 3rem; font-weight: 900;
+  background: linear-gradient(135deg, #fe2c55, #25f4ee);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 6px; letter-spacing: -1px;
+}
+
+.sub { color: #555; font-size: .88rem; margin-bottom: 32px; text-align: center; }
+
+.card {
+  background: #0a0a0a; border: 1px solid #1a1a1a;
+  border-radius: 20px; padding: 32px 28px;
+  width: 100%; max-width: 380px;
+}
+
+.title { font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; }
+
+.form { display: flex; flex-direction: column; gap: 12px; }
+
+.input {
+  padding: 13px 16px; background: #111; border: 1px solid #1e1e1e;
+  border-radius: 10px; color: #fff; font-size: .95rem; width: 100%;
+  transition: border-color .2s;
+}
+
+.input::placeholder { color: #444; }
+.input:focus { border-color: #fe2c55; }
+
+.btn {
+  padding: 13px; background: #fe2c55; color: #fff;
+  border-radius: 50px; font-size: 1rem; font-weight: 700;
+  transition: all .2s; margin-top: 4px;
+  box-shadow: 0 4px 15px rgba(254,44,85,0.35);
+}
+
+.btn:hover:not(:disabled) { background: #e6254d; transform: translateY(-1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.error {
+  background: rgba(254,44,85,0.1); border: 1px solid rgba(254,44,85,0.3);
+  color: #ff6b81; padding: 10px 14px; border-radius: 8px; font-size: .85rem; margin-bottom: 8px;
+}
+
+.switch { text-align: center; margin-top: 18px; color: #666; font-size: .88rem; }
+.switch a { color: #fe2c55; font-weight: 600; }
+
+.success {
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);
+  color: #22c55e; padding: 10px 14px; border-radius: 8px; font-size: .85rem; margin-bottom: 8px;
+}
+
+.link {
+  display: block; text-align: center; margin-top: 14px;
+  color: #fe2c55; font-size: .85rem; font-weight: 600;
+  cursor: pointer;
+}
+
+.langRow { position: absolute; top: 16px; right: 16px; }
